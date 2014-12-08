@@ -24,17 +24,21 @@
 .Nm sintl
 .Op Fl e
 .Op Fl j Ar file
+.Op Fl u Ar file
 .Ar
 .Sh DESCRIPTION
 The
 .Nm
-utility either translates HTML5 files or extracts translatable
-components from the same.
+utility either translates HTML5 files, extracts translatable components,
+or updates translation files.
 Usually, one extracts translatable strings with
 .Fl e ,
 fills in translations, then joins translations and untranslated files
 with
 .Fl j .
+After adding or deleting translations, one uses
+.Fl u
+to keep the translation files up to date.
 By default,
 .Nm
 behaves as if
@@ -42,18 +46,23 @@ behaves as if
 were used.
 Its arguments are as follows:
 .Bl -tag -width -Ds
+.It Fl e
+Extracts translatable strings from input files, emitting the XLIFF
+translation file skeleton to standard output.
 .It Fl j Ar file
 Join
 .Pq Qq translate
 the translations in the XLIFF
 .Ar file
 with input files, emitting translations to standard output.
-.It Fl e
-Extracts translatable strings from input files, emitting the XLIFF
-translation file skeleton to standard output.
+.It Fl u Ar file
+Updates the XLIFF
+.Ar file
+with new translatable strings in the input files.
 .It Ar
 XML input files to be translated or mined for translatable information.
 .El
+.Pp
 Each text node in the input files, which must be HTML5, is its own
 translatable string.
 For example,

@@ -21,6 +21,7 @@ __BEGIN_DECLS
 
 int	extract(XML_Parser, int, char *[]);
 int	join(const char *, XML_Parser, int, char *[]);
+int	update(const char *, XML_Parser, int, char *[]);
 
 __END_DECLS
 

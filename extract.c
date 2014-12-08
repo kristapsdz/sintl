@@ -30,6 +30,8 @@
 
 #include "extern.h"
 
+#define	XLIFFURN "urn:oasis:names:tc:xliff:document:2.0"
+
 enum	op {
 	OP_JOIN,
 	OP_EXTRACT
@@ -255,27 +257,31 @@ cache(struct hparse *p)
  * If it doesn't, then emit what already exists on the page.
  */
 static void
-translate(struct hparse *p)
+translate(struct hparse *hp)
 {
 	char	*cp;
 	size_t	 i;
 
-	assert(OP_JOIN == p->op);
-	assert(p->stack[p->stacksz - 1].translate);
+	assert(OP_JOIN == hp->op);
+	assert(hp->stack[hp->stacksz - 1].translate);
 
-	cp = (0 == p->stack[p->stacksz - 1].preserve) ?
-		strip(p->ident, p->identsz) : p->ident;
-	p->identsz = 0;
+	cp = (0 == hp->stack[hp->stacksz - 1].preserve) ?
+		strip(hp->ident, hp->identsz) : hp->ident;
+	hp->identsz = 0;
 
 	if (NULL == cp)
 		return;
-	for (i = 0; i < p->xliffsz; i++)
-		if (0 == strcmp(p->xliffs[i].source, cp)) {
-			printf("%s", p->xliffs[i].target);
+	for (i = 0; i < hp->xliffsz; i++)
+		if (0 == strcmp(hp->xliffs[i].source, cp)) {
+			printf("%s", hp->xliffs[i].target);
 			return;
 		}
 
-	printf("%s", p->ident);
+	fprintf(stderr, "%s:%zu:%zu: No translation found\n",
+		hp->fname, 
+		XML_GetCurrentLineNumber(hp->p),
+		XML_GetCurrentColumnNumber(hp->p));
+	printf("%s", hp->ident);
 }
 
 /*
@@ -619,36 +625,68 @@ cmp(const void *p1, const void *p2)
 }
 
 static void
-results(struct hparse *p)
+results_update(struct hparse *hp)
+{
+	size_t	 i, j;
+
+	qsort(hp->words, hp->wordsz, sizeof(char *), cmp);
+
+	puts("<xliff xmlns=\"" XLIFFURN "\" "
+		"version=\"2.0\" srcLang=\"TODO\" trgLang=\"TODO\">");
+	puts("\t<file id=\"file1\">");
+	puts("\t\t<unit id=\"unit1\">");
+	for (i = 0; i < hp->wordsz; i++) {
+		if (i && 0 == strcmp(hp->words[i], hp->words[i - 1]))
+			continue;
+		for (j = 0; j < hp->xliffsz; j++) {
+			if (0 == strcmp(hp->words[i], 
+				hp->xliffs[j].source))
+				break;
+		}
+		puts("\t\t\t<segment>");
+		printf("\t\t\t\t<source>%s</source>\n", 
+			hp->words[i]);
+		printf("\t\t\t\t<target>%s</target>\n", 
+			j == hp->xliffsz ? "TODO" : 
+			hp->xliffs[j].target);
+		puts("\t\t\t</segment>");
+	}
+	puts("\t\t</unit>");
+	puts("\t</file>");
+	puts("</xliff>");
+}
+
+static void
+results_extract(struct hparse *p)
 {
 	size_t	 i;
 
 	qsort(p->words, p->wordsz, sizeof(char *), cmp);
 
-	puts("<xliff xmlns=\"urn:oasis:names:tc:xliff:document:2.0\" "
+	puts("<xliff xmlns=\"" XLIFFURN "\" "
 		"version=\"2.0\" srcLang=\"TODO\" trgLang=\"TODO\">");
-	puts("  <file id=\"file1\">");
-	puts("    <unit id=\"unit1\">");
+	puts("\t<file id=\"file1\">");
+	puts("\t\t<unit id=\"unit1\">");
 	for (i = 0; i < p->wordsz; i++) {
 		if (i && 0 == strcmp(p->words[i], p->words[i - 1]))
 			continue;
-		puts("      <segment>");
-		printf("        <source>%s</source>\n", p->words[i]);
-		puts("        <target>TODO</target>");
-		puts("      </segment>");
+		puts("\t\t\t<segment>");
+		printf("\t\t\t\t<source>%s</source>\n", p->words[i]);
+		puts("\t\t\t\t<target>TODO</target>");
+		puts("\t\t\t</segment>");
 	}
-	puts("    </unit>");
-	puts("  </file>");
+	puts("\t\t</unit>");
+	puts("\t</file>");
 	puts("</xliff>");
 }
 
 static int
-map_open(const char *fn, size_t *mapsz, void **map)
+map_open(const char *fn, size_t *mapsz, char **map)
 {
 	struct stat	 st;
 	int	 	 fd;
 
-	if (-1 == (fd = open(fn, O_RDONLY, 0))) {
+	if (-1 == (fd = open(fn, O_RDONLY))) {
 		perror(fn);
 		return(-1);
 	} else if (-1 == fstat(fd, &st)) {
@@ -666,8 +704,7 @@ map_open(const char *fn, size_t *mapsz, void **map)
 	}
 
 	*mapsz = st.st_size;
-	*map = mmap(NULL, *mapsz, PROT_READ, 
-		MAP_FILE | MAP_SHARED, fd, 0);
+	*map = mmap(NULL, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
 	if (MAP_FAILED == *map) {
 		perror(fn);
@@ -697,7 +734,9 @@ scanner(struct hparse *hp, int argc, char *argv[])
 		return(dofile(hp, NULL, 0));
 
 	for (i = 0; i < argc; i++) {
-		fd = map_open(argv[i], &mapsz, (void **)&map);
+		map = NULL;
+		mapsz = 0;
+		fd = map_open(argv[i], &mapsz, &map);
 		if (-1 == fd)
 			break;
 		hp->fname = argv[i];
@@ -726,7 +765,7 @@ extract(XML_Parser p, int argc, char *argv[])
 	hp->p = p;
 	hp->op = OP_EXTRACT;
 	if (0 != (rc = scanner(hp, argc, argv)))
-		results(hp);
+		results_extract(hp);
 
 	hparse_free(hp);
 	return(rc);
@@ -744,13 +783,19 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 	size_t		 mapsz;
 	int		 fd, rc;
 
+	/*
+	 * Begin by allocating, reading, and then parsing the XLIFF file
+	 * into the xparse structure.
+	 */
 	xp = calloc(1, sizeof(struct xparse));
 	if (NULL == xp) {
 		perror(NULL);
 		exit(EXIT_FAILURE);
 	}
 
-	fd = map_open(xliff, &mapsz, (void **)&map);
+	map = NULL;
+	mapsz = 0;
+	fd = map_open(xliff, &mapsz, &map);
 	if (-1 == fd) {
 		free(xp);
 		return(0);
@@ -758,7 +803,6 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 
 	xp->p = p;
 	xp->fname = xliff;
-
 	XML_ParserReset(p, NULL);
 	XML_SetDefaultHandlerExpand(p, NULL);
 	XML_SetElementHandler(p, xstart, xend);
@@ -773,12 +817,13 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 			XML_GetCurrentColumnNumber(p),
 			XML_ErrorString(XML_GetErrorCode(p)));
 		rc = 0;
-	} else if (0 == xp->xliffsz) {
-		fprintf(stderr, "%s: No entries\n", xliff);
-		rc = 0;
 	} else
 		rc = 1;	
 
+	/*
+	 * If the parse went well, we're going to apply the translation
+	 * dictionary to the input files.
+	 */
 	if (rc > 0) {
 		hp = calloc(1, sizeof(struct hparse));
 		if (NULL == hp) {
@@ -791,6 +836,76 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 		hp->op = OP_JOIN;
 		rc = scanner(hp, argc, argv);
 		assert(NULL == hp->words);
+		hparse_free(hp);
+	}
+
+	xparse_free(xp);
+	return(rc);
+}
+
+int
+update(const char *xliff, XML_Parser p, int argc, char *argv[])
+{
+	struct xparse	*xp;
+	struct hparse	*hp;
+	char		*map;
+	size_t		 mapsz;
+	int		 fd, rc;
+
+	/*
+	 * Begin by allocating, reading, and then parsing the XLIFF file
+	 * into the xparse structure.
+	 */
+	xp = calloc(1, sizeof(struct xparse));
+	if (NULL == xp) {
+		perror(NULL);
+		exit(EXIT_FAILURE);
+	}
+
+	map = NULL;
+	mapsz = 0;
+	fd = map_open(xliff, &mapsz, &map);
+	if (-1 == fd) {
+		free(xp);
+		return(0);
+	}
+
+	xp->p = p;
+	xp->fname = xliff;
+	XML_ParserReset(p, NULL);
+	XML_SetDefaultHandlerExpand(p, NULL);
+	XML_SetElementHandler(p, xstart, xend);
+	XML_SetUserData(p, xp);
+	rc = XML_Parse(p, map, mapsz, 1);
+	map_close(fd, map, mapsz);
+
+	if (XML_STATUS_OK != rc) {
+		fprintf(stderr, "%s:%zu:%zu: %s\n", 
+			xliff, 
+			XML_GetCurrentLineNumber(p),
+			XML_GetCurrentColumnNumber(p),
+			XML_ErrorString(XML_GetErrorCode(p)));
+		rc = 0;
+	} else
+		rc = 1;	
+
+	/*
+	 * If the parse went well, we want to extract keywords from all
+	 * of the source files.
+	 */
+	if (rc > 0) {
+		hp = calloc(1, sizeof(struct hparse));
+		if (NULL == hp) {
+			perror(NULL);
+			exit(EXIT_FAILURE);
+		}
+		hp->p = p;
+		hp->op = OP_EXTRACT;
+		hp->xliffs = xp->xliffs;
+		hp->xliffsz = xp->xliffsz;
+		/* Finally, perform our diff. */
+		if (0 != (rc = scanner(hp, argc, argv)))
+			results_update(hp);
 		hparse_free(hp);
 	}
 

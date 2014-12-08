@@ -27,7 +27,8 @@
 
 enum	op {
 	OP_JOIN,
-	OP_EXTRACT
+	OP_EXTRACT,
+	OP_UPDATE
 };
 
 int
@@ -46,7 +47,7 @@ main(int argc, char *argv[])
 
 	xliff = NULL;
 	op = OP_EXTRACT;
-	while (-1 != (ch = getopt(argc, argv, "ej:")))
+	while (-1 != (ch = getopt(argc, argv, "ej:u:")))
 		switch (ch) {
 		case ('e'):
 			op = OP_EXTRACT;
@@ -54,6 +55,10 @@ main(int argc, char *argv[])
 			break;
 		case ('j'):
 			op = OP_JOIN;
+			xliff = optarg;
+			break;
+		case ('u'):
+			op = OP_UPDATE;
 			xliff = optarg;
 			break;
 		default:
@@ -75,6 +80,10 @@ main(int argc, char *argv[])
 	case (OP_JOIN):
 		assert(NULL != xliff);
 		rc = join(xliff, p, argc, argv);
+		break;
+	case (OP_UPDATE):
+		assert(NULL != xliff);
+		rc = update(xliff, p, argc, argv);
 		break;
 	default:
 		abort();
