@@ -30,6 +30,11 @@
 
 #include "extern.h"
 
+enum	op {
+	OP_JOIN,
+	OP_EXTRACT
+};
+
 /*
  * A translation context (do or don't).
  * These begin with an element ("name") and may be nested with
@@ -53,13 +58,14 @@ struct	xliff {
 /*
  * Parse tracker for a document that's either going to be translated or
  * scanned for translatable parts.
- * These switch on whether the "xliffs" argument is NULL.
- * If it is NULL, then we're looking for stuff to translate.
+ * These switch on the "op".
+ * If it is OP_EXTRACT, then we're looking for stuff to translate.
  * Otherwise, we fill in with the translation.
  */
 struct	hparse {
 	XML_Parser	  p;
 	const char	 *fname; /* file being parsed */
+	enum op	 	  op; /* what we're doing */
 	char		**words; /* if scanning, scanned words */
 	size_t		  wordsz; /* number of words */
 	size_t		  wordmax; /* word buffer size */
@@ -207,7 +213,7 @@ cache(struct hparse *p)
 {
 	char	*cp;
 
-	assert(NULL == p->xliffs);
+	assert(OP_EXTRACT == p->op);
 	assert(p->identsz > 0);
 
 	/* Expand word list, if necessary. */
@@ -254,7 +260,7 @@ translate(struct hparse *p)
 	char	*cp;
 	size_t	 i;
 
-	assert(NULL != p->xliffs);
+	assert(OP_JOIN == p->op);
 	assert(p->stack[p->stacksz - 1].translate);
 
 	cp = (0 == p->stack[p->stacksz - 1].preserve) ?
@@ -279,7 +285,7 @@ translate(struct hparse *p)
 static void
 xtext(void *dat, const XML_Char *s, int len)
 {
-	struct hparse	*p = dat;
+	struct xparse	*p = dat;
 
 	if (p->identsz + len + 1 > p->identmax) {
 		p->identmax = p->identsz + len + 1;
@@ -418,7 +424,7 @@ htext(void *dat, const XML_Char *s, int len)
 	
 	if (0 == p->stacksz || 
 		0 == p->stack[p->stacksz - 1].translate) {
-		if (NULL != p->xliffs)
+		if (OP_JOIN == p->op)
 			printf("%.*s", len, s);
 		return;
 	}
@@ -449,7 +455,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	int		  nt, pres;
 
 	/* Cache/translate any existing keywords. */
-	if (p->identsz > 0 && NULL != p->xliffs)
+	if (p->identsz > 0 && OP_JOIN == p->op)
 		translate(p);
 	else if (p->identsz > 0)
 		cache(p);
@@ -458,7 +464,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	 * If we're translating, then echo the tags.
 	 * Make sure we accomodate for minimisations.
 	 */
-	if (NULL != p->xliffs) {
+	if (OP_JOIN == p->op) {
 		printf("<%s", s);
 		for (attp = atts; NULL != *attp; attp += 2) 
 			printf(" %s=\"%s\"", attp[0], attp[1]);
@@ -498,6 +504,12 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 		return;
 	}
 
+	/* By default, inherit from parent. */
+	if (0 == nt)
+		nt = p->stack[p->stacksz - 1].translate;
+	if (0 == pres)
+		pres = p->stack[p->stacksz - 1].preserve;
+
 	/*
 	 * Create our new translation context.
 	 * This can be either translating or not.
@@ -529,13 +541,13 @@ hend(void *dat, const XML_Char *s)
 	struct hparse	*p = dat;
 
 	/* Flush any existing keywords. */
-	if (p->identsz > 0 && NULL != p->xliffs)
+	if (p->identsz > 0 && OP_JOIN == p->op)
 		translate(p);
 	else if (p->identsz > 0)
 		cache(p);
 
 	/* Echo if we're translating, unless we've already closed. */
-	if (NULL != p->xliffs && ! xmlvoid(s))
+	if (OP_JOIN == p->op && ! xmlvoid(s))
 		printf("</%s>", s);
 
 	/* Check if we're closing a translation context. */
@@ -712,6 +724,7 @@ extract(XML_Parser p, int argc, char *argv[])
 	}
 
 	hp->p = p;
+	hp->op = OP_EXTRACT;
 	if (0 != (rc = scanner(hp, argc, argv)))
 		results(hp);
 
@@ -720,7 +733,7 @@ extract(XML_Parser p, int argc, char *argv[])
 }
 
 /*
- * Translate the files in "argc" with the 
+ * Translate the files in "argc" with the dictionary in "xliff".
  */
 int
 join(const char *xliff, XML_Parser p, int argc, char *argv[])
@@ -775,6 +788,7 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 		hp->p = p;
 		hp->xliffs = xp->xliffs;
 		hp->xliffsz = xp->xliffsz;
+		hp->op = OP_JOIN;
 		rc = scanner(hp, argc, argv);
 		assert(NULL == hp->words);
 		hparse_free(hp);
