@@ -130,6 +130,46 @@ xmlvoid(const XML_Char *s)
 	return(0);
 }
 
+static void
+hparse_reset(struct hparse *hp)
+{
+
+	hp->identsz = 0;
+	while (hp->stacksz > 0)
+		free(hp->stack[--hp->stacksz].name);
+}
+
+static void
+hparse_free(struct hparse *hp)
+{
+	size_t	 i;
+
+	while (hp->stacksz > 0)
+		free(hp->stack[--hp->stacksz].name);
+
+	for (i = 0; i < hp->wordsz; i++)
+		free(hp->words[i]);
+	free(hp->words);
+	free(hp->ident);
+	free(hp);
+}
+
+static void
+xparse_free(struct xparse *xp)
+{
+	size_t	 i;
+
+	free(xp->target);
+	free(xp->source);
+	for (i = 0; i < xp->xliffsz; i++) {
+		free(xp->xliffs[i].source);
+		free(xp->xliffs[i].target);
+	}
+	free(xp->xliffs);
+	free(xp->ident);
+	free(xp);
+}
+
 /*
  * Strip the nil-terminated character string "cp" of length "sz" of its
  * leading and trailing whitespace.
@@ -241,7 +281,7 @@ xtext(void *dat, const XML_Char *s, int len)
 {
 	struct hparse	*p = dat;
 
-	if (p->identsz + len > p->identmax) {
+	if (p->identsz + len + 1 > p->identmax) {
 		p->identmax = p->identsz + len + 1;
 		p->ident = realloc(p->ident, p->identmax);
 		if (NULL == p->ident) {
@@ -383,7 +423,7 @@ htext(void *dat, const XML_Char *s, int len)
 		return;
 	}
 
-	if (p->identsz + len > p->identmax) {
+	if (p->identsz + len + 1 > p->identmax) {
 		p->identmax = p->identsz + len + 1;
 		p->ident = realloc(p->ident, p->identmax);
 		if (NULL == p->ident) {
@@ -406,7 +446,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct hparse	 *p = dat;
 	const XML_Char	**attp;
-	int		  nt;
+	int		  nt, pres;
 
 	/* Cache/translate any existing keywords. */
 	if (p->identsz > 0 && NULL != p->xliffs)
@@ -428,23 +468,30 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	}
 
 	/* Check if we should begin translating. */
-	for (nt = 0, attp = atts; NULL != *attp; attp += 2)
+	for (nt = pres = 0, attp = atts; NULL != *attp; attp += 2)
 		if (0 == strcmp(attp[0], "its:translate")) {
 			if (0 == strcasecmp(attp[1], "yes"))
 				nt = 1;
 			else if (0 == strcasecmp(attp[1], "no"))
 				nt = -1;
+		} else if (0 == strcmp(attp[0], "xml:space")) {
+			if (0 == strcasecmp(attp[1], "preserve"))
+				pres = 1;
+			else if (0 == strcasecmp(attp[1], "default"))
+				pres = -1;
 		}
 
 	/* Default for whole document. */
 	if (0 == p->stacksz && 0 == nt)
 		nt = -1;
+	if (0 == p->stacksz && 0 == pres)
+		pres = -1;
 
 	/*
 	 * If we're not changing our translation context, see if we've
 	 * entered a nested context and mark it, if so.
 	 */
-	if (0 == nt) {
+	if (0 == nt && 0 == pres) {
 		assert(p->stacksz > 0);
 		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
@@ -463,6 +510,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	}
 
 	p->stack[p->stacksz].translate = 1 == nt;
+	p->stack[p->stacksz].preserve = 1 == pres;
 	p->stack[p->stacksz++].nested = 0;
 	if (p->stacksz == 64) {
 		/* FIXME */
@@ -508,8 +556,28 @@ hend(void *dat, const XML_Char *s)
 }
 
 static int
-dofile(struct hparse *p, const char *map, 
-	size_t mapsz, const char *fname)
+dofileread(struct hparse *p)
+{
+	char	 b[4096];
+	ssize_t	 sz;
+	int	 rc = XML_STATUS_OK;
+
+	do {
+		if ((sz = read(STDIN_FILENO, b, sizeof(b))) < 0)
+			break;
+		rc = XML_Parse(p->p, b, sz, sz == 0);
+	} while (XML_STATUS_OK == rc && sz > 0);
+
+	if (sz < 0) {
+		perror("<stdin>");
+		return(0);
+	}
+
+	return(XML_STATUS_OK == rc);
+}
+
+static int
+dofile(struct hparse *p, const char *map, size_t mapsz)
 {
 
 	XML_ParserReset(p->p, NULL);
@@ -517,11 +585,14 @@ dofile(struct hparse *p, const char *map,
 	XML_SetElementHandler(p->p, hstart, hend);
 	XML_SetUserData(p->p, p);
 
-	if (XML_STATUS_OK == XML_Parse(p->p, map, mapsz, 1))
+	if (NULL == map) {
+		if (dofileread(p) >= 0)
+			return(1);
+	} else if (XML_STATUS_OK == XML_Parse(p->p, map, mapsz, 1))
 		return(1);
 
 	fprintf(stderr, "%s:%zu:%zu: %s\n", 
-		fname, 
+		p->fname, 
 		XML_GetCurrentLineNumber(p->p),
 		XML_GetCurrentColumnNumber(p->p),
 		XML_ErrorString(XML_GetErrorCode(p->p)));
@@ -604,24 +675,23 @@ map_close(int fd, void *map, size_t mapsz)
 }
 
 static int
-scanner(struct hparse *parse, int argc, char *argv[])
+scanner(struct hparse *hp, int argc, char *argv[])
 {
 	int		 i, fd, rc;
 	char		*map;
 	size_t		 mapsz;
 
+	if (0 == argc)
+		return(dofile(hp, NULL, 0));
+
 	for (i = 0; i < argc; i++) {
 		fd = map_open(argv[i], &mapsz, (void **)&map);
 		if (-1 == fd)
 			break;
-
-		parse->fname = argv[i];
-		rc = dofile(parse, map, mapsz, argv[i]);
+		hp->fname = argv[i];
+		rc = dofile(hp, map, mapsz);
 		map_close(fd, map, mapsz);
-
-		while (parse->stacksz > 0)
-			free(parse->stack[--parse->stacksz].name);
-
+		hparse_reset(hp);
 		if (0 == rc)
 			break;
 	}
@@ -632,35 +702,33 @@ scanner(struct hparse *parse, int argc, char *argv[])
 int
 extract(XML_Parser p, int argc, char *argv[])
 {
-	struct hparse	*parse;
+	struct hparse	*hp;
 	int		 rc;
-	size_t		 i;
 
-	parse = calloc(1, sizeof(struct hparse));
-	if (NULL == parse) {
+	hp = calloc(1, sizeof(struct hparse));
+	if (NULL == hp) {
 		perror(NULL);
 		exit(EXIT_FAILURE);
 	}
 
-	parse->p = p;
-	if (0 != (rc = scanner(parse, argc, argv)))
-		results(parse);
+	hp->p = p;
+	if (0 != (rc = scanner(hp, argc, argv)))
+		results(hp);
 
-	for (i = 0; i < parse->wordsz; i++)
-		free(parse->words[i]);
-	free(parse->words);
-	free(parse->ident);
-	free(parse);
+	hparse_free(hp);
 	return(rc);
 }
 
+/*
+ * Translate the files in "argc" with the 
+ */
 int
 join(const char *xliff, XML_Parser p, int argc, char *argv[])
 {
 	struct xparse	*xp;
 	struct hparse	*hp;
 	char		*map;
-	size_t		 i, mapsz;
+	size_t		 mapsz;
 	int		 fd, rc;
 
 	xp = calloc(1, sizeof(struct xparse));
@@ -709,18 +777,9 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 		hp->xliffsz = xp->xliffsz;
 		rc = scanner(hp, argc, argv);
 		assert(NULL == hp->words);
-		free(hp->ident);
-		free(hp);
+		hparse_free(hp);
 	}
 
-	free(xp->target);
-	free(xp->source);
-	for (i = 0; i < xp->xliffsz; i++) {
-		free(xp->xliffs[i].source);
-		free(xp->xliffs[i].target);
-	}
-	free(xp->xliffs);
-	free(xp->ident);
-	free(xp);
+	xparse_free(xp);
 	return(rc);
 }

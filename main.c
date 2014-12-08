@@ -46,8 +46,12 @@ main(int argc, char *argv[])
 
 	xliff = NULL;
 	op = OP_EXTRACT;
-	while (-1 != (ch = getopt(argc, argv, "j:")))
+	while (-1 != (ch = getopt(argc, argv, "ej:")))
 		switch (ch) {
+		case ('e'):
+			op = OP_EXTRACT;
+			xliff = NULL;
+			break;
 		case ('j'):
 			op = OP_JOIN;
 			xliff = optarg;

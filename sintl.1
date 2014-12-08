@@ -1,0 +1,103 @@
+.\"	$Id$
+.\"
+.\" Copyright (c) 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate$
+.Dt SINTL 1
+.Os
+.Sh NAME
+.Nm sintl
+.Nd simple internationalisation utility
+.Sh SYNOPSIS
+.Nm sintl
+.Op Fl e
+.Op Fl j Ar file
+.Ar
+.Sh DESCRIPTION
+The
+.Nm
+utility either translates HTML5 files or extracts translatable
+components from the same.
+Usually, one extracts translatable strings with
+.Fl e ,
+fills in translations, then joins translations and untranslated files
+with
+.Fl j .
+By default,
+.Nm
+behaves as if
+.Fl e
+were used.
+Its arguments are as follows:
+.Bl -tag -width -Ds
+.It Fl j Ar file
+Join
+.Pq Qq translate
+the translations in the XLIFF
+.Ar file
+with input files, emitting translations to standard output.
+.It Fl e
+Extracts translatable strings from input files, emitting the XLIFF
+translation file skeleton to standard output.
+.It Ar
+XML input files to be translated or mined for translatable information.
+.El
+Each text node in the input files, which must be HTML5, is its own
+translatable string.
+For example,
+.Bd -literal
+<section>
+  <div>foo <i>bar</i> baz</div>
+  foobar
+</section>
+.Ed
+.Pp
+results in four translatable strings: foo, bar, baz, and foobar.
+Leading and trailing white-space for the translatable key is stripped,
+which is why the text node following <section> is ignored.
+You may override this behaviour with the
+.Li xml:space="preserve"
+attribute, which affects the current and descendent nodes.
+.Pp
+Translation may be controlled with the
+.Li its:translate
+attribute, which is set to either
+.Li yes
+or
+.Li no .
+When set to
+.Li no
+.Pq the default ,
+all nodes at and under the labelled node are not examined for
+translatable content.
+When set to
+.Li yes ,
+the opposite is true.
+Thus, to white-list translations, set
+.Li its:translate="no"
+on the root node and mark each translatable node with
+.Li its:translate="yes" .
+.Sh EXIT STATUS
+.Ex -std
+.Sh STANDARDS
+HTML5 files to translate must be valid XML-form HTML5 documents
+annotated with a subset of the W3C ITS v2.0 attributes.
+Files holding translation dictionaries must be valid XLIFF 2.0 files.
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons ,
+.Mt kristaps@bsd.lv .

@@ -8,13 +8,11 @@ OBJS		 = compat-reallocarray.o \
 		   compat-strlcat.o \
 		   compat-strlcpy.o \
 		   extract.o \
-		   join.o \
 		   main.o 
 SRCS		 = compat-reallocarray.c \
 		   compat-strlcat.c \
 		   compat-strlcpy.c \
 		   extract.c \
-		   join.c \
 		   main.c
 TESTS 		 = test-reallocarray.c \
       		   test-strlcat.c \
@@ -22,47 +20,47 @@ TESTS 		 = test-reallocarray.c \
 VERSIONS	 = version_0_1_0.xml 
 XMLS		 = index.xml
 ATOM 		 = atom.xml
-HTMLS 		 = index.html sitstool.1.html
+HTMLS 		 = index.html sintl.1.html
 CSSS 		 = index.css 
 BINDIR 		 = $(PREFIX)/bin
 MANDIR 		 = $(PREFIX)/man
 DOTAR 		 = Makefile \
 		   $(SRCS) \
-		   sitstool.1 \
+		   sintl.1 \
 		   extern.h \
 		   configure \
 		   config.h.post \
 		   config.h.pre \
 		   $(TESTS)
 
-sitstool: $(OBJS)
+sintl: $(OBJS)
 	$(CC) -o $@ $(OBJS) -lexpat
 
-www: $(HTMLS) $(ATOM) sitstool.tar.gz sitstool.tar.gz.sha512
+www: $(HTMLS) $(ATOM) sintl.tar.gz sintl.tar.gz.sha512
 
 installwww: www
 	mkdir -p $(PREFIX)
 	mkdir -p $(PREFIX)/snapshots
 	install -m 0444 Makefile $(ATOM) $(HTMLS) $(CSSS) $(WWWDIR)
-	install -m 0444 sitstool.tar.gz $(WWWDIR)/snapshots/sitstool-$(VERSION).tar.gz
-	install -m 0444 sitstool.tar.gz.sha512 $(WWWDIR)/snapshots/sitstool-$(VERSION).tar.gz.sha512
-	install -m 0444 sitstool.tar.gz $(WWWDIR)/snapshots
-	install -m 0444 sitstool.tar.gz.sha512 $(WWWDIR)/snapshots
+	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz
+	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz.sha512
+	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots
+	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots
 
-install: sitstool
+install: sintl
 	mkdir -p $(DESTDIR)$(BINDIR)
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
-	install -m 0755 sitstool $(DESTDIR)$(BINDIR)
-	install -m 0444 sitstool.1 $(DESTDIR)$(MANDIR)/man1
+	install -m 0755 sintl $(DESTDIR)$(BINDIR)
+	install -m 0444 sintl.1 $(DESTDIR)$(MANDIR)/man1
 
-sitstool.tar.gz:
-	mkdir -p .dist/sitstool-$(VERSION)/
-	install -m 0644 $(DOTAR) .dist/sitstool-$(VERSION)
+sintl.tar.gz:
+	mkdir -p .dist/sintl-$(VERSION)/
+	install -m 0644 $(DOTAR) .dist/sintl-$(VERSION)
 	( cd .dist/ && tar zcf ../$@ ./ )
 	rm -rf .dist/
 
-sitstool.tar.gz.sha512: sitstool.tar.gz
-	openssl dgst -sha512 sitstool.tar.gz >$@
+sintl.tar.gz.sha512: sintl.tar.gz
+	openssl dgst -sha512 sintl.tar.gz >$@
 
 config.h: config.h.pre config.h.post configure $(TESTS)
 	rm -f config.log
@@ -85,6 +83,6 @@ atom.xml: $(VERSIONS)
 	mandoc -Thtml $< >$@
 
 clean:
-	rm -f sitstool $(ATOM) $(OBJS) $(HTMLS) sitstool.tar.gz sitstool.tar.gz.sha512
+	rm -f sintl $(ATOM) $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 	rm -f config.h config.log
 	rm -rf *.dSYM
