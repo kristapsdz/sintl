@@ -38,11 +38,11 @@ www: $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 installwww: www
 	mkdir -p $(PREFIX)
 	mkdir -p $(PREFIX)/snapshots
-	install -m 0444 Makefile $(HTMLS) $(CSSS) $(WWWDIR)
-	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz
-	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz.sha512
-	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots
-	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots
+	install -m 0444 Makefile $(HTMLS) $(CSSS) $(PREFIX)
+	install -m 0444 sintl.tar.gz $(PREFIX)/snapshots/sintl-$(VERSION).tar.gz
+	install -m 0444 sintl.tar.gz.sha512 $(PREFIX)/snapshots/sintl-$(VERSION).tar.gz.sha512
+	install -m 0444 sintl.tar.gz $(PREFIX)/snapshots
+	install -m 0444 sintl.tar.gz.sha512 $(PREFIX)/snapshots
 
 install: sintl
 	mkdir -p $(DESTDIR)$(BINDIR)
