@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html its:translate="no">
+	<head>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<meta charset="utf-8" /> 
+		<title its:translate="yes">sintl: simple internationalisation utility</title>
+		<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+		<link rel="stylesheet" href="index.css" type="text/css" />
+		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" />
+	</head>
+	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication">
+		<header>
+			<div><i class="fa fa-language fa-4x"></i><span its:translate="yes">multi-language content</span></div>
+			<div><i class="fa fa-gears fa-4x"></i><a href="sintl.1.html">sintl(1)</a></div>
+			<div><i class="fa fa-html5 fa-4x"></i><span its:translate="yes">translated HTML5</span></div>
+		</header>
+		<article>
+			<p>
+				<a href="sintl.1.html"><span itemprop="name">sintl</span>(1)</a> is <span itemprop="description">a simple UNIX
+					utility for managing HTML5 translations</span>.
+				It works similarly to <a href="http://itstool.org/">itstool</a>, except that it's built for HTML5, is in ISO C
+				and <a href="http://opensource.org/licenses/ISC" rel="license">ISC</a> licensed, and depends only on <a
+					href="http://expat.sourceforge.net/">libexpat</a>.
+			</p>
+			<p>
+				<a href="sintl.1.html">sintl(1)</a> uses a simplified <a href="https://en.wikipedia.org/wiki/XLIFF">XLIFF</a>
+				file to manage its translation dictionaries.
+				It can create XLIFF templates from HTML5 or keep templates up to date with existing dictionaries.
+				The HTML5 must use a simple subset of <a href="http://www.w3.org/TR/its20/">ITS</a> to indicate what should be
+				and should not be translated.
+				<a href="sintl.1.html">sintl(1)</a> then merges HTML5 files with <a href="http://www.w3.org/TR/html5/">HTML5</a>
+				documents to create translated output.
+			</p>
+			<p>
+				In short, input markup within elements labelled as <code class="prettyprint lang-html">&lt;span
+					its:translate="yes"&gt;this&lt;/span&gt;</code> would be marked for translation.
+				The translation dictionary is just an XML file with key-value pairs.
+				For example, <a href="index.fr.html">index.fr.html</a> holds a partially French-translated page.
+				Easy-peasy.
+			</p>
+			<p>
+				To use, download <a itemprop="downloadURL" href="snapshots/sintl.tar.gz">sintl.tar.gz</a> (<a
+					href="snapshots/sintl.tar.gz.sha512">sha512</a>, <a href="snapshots">archives</a>) and run 
+				<code class="prettyprint">make install</code> as usual.
+				The latest versions are as follows:
+			</p>
+			<nav data-sblg-nav="1" data-sblg-navsz="2" data-sblg-navcontent="1">
+				Version <span class="version">${sblg-title}</span> (<time datetime="${sblg-date}">${sblg-date}</time>): ${sblg-aside}
+			</nav>
+		</article>
+		<footer>
+			&#169; 2014, <a href="http://kristaps.bsd.lv">Kristaps Dzonsons</a>
+		</footer>
+	</body>
+</html>

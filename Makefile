@@ -1,5 +1,3 @@
-.SUFFIXES: .xml .html
-
 VERSION 	 = 0.1.0
 VDATE 		 = 2014-11-29
 PREFIX 		 = /usr/local
@@ -19,8 +17,7 @@ TESTS 		 = test-reallocarray.c \
       		   test-strlcpy.c 
 VERSIONS	 = version_0_1_0.xml 
 XMLS		 = index.xml
-ATOM 		 = atom.xml
-HTMLS 		 = index.html sintl.1.html
+HTMLS 		 = index.html index.fr.html sintl.1.html
 CSSS 		 = index.css 
 BINDIR 		 = $(PREFIX)/bin
 MANDIR 		 = $(PREFIX)/man
@@ -36,12 +33,12 @@ DOTAR 		 = Makefile \
 sintl: $(OBJS)
 	$(CC) -o $@ $(OBJS) -lexpat
 
-www: $(HTMLS) $(ATOM) sintl.tar.gz sintl.tar.gz.sha512
+www: $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 
 installwww: www
 	mkdir -p $(PREFIX)
 	mkdir -p $(PREFIX)/snapshots
-	install -m 0444 Makefile $(ATOM) $(HTMLS) $(CSSS) $(WWWDIR)
+	install -m 0444 Makefile $(HTMLS) $(CSSS) $(WWWDIR)
 	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz
 	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz.sha512
 	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots
@@ -68,21 +65,19 @@ config.h: config.h.pre config.h.post configure $(TESTS)
 
 $(OBJS): extern.h config.h
 
-atom.xml: atom-template.xml
-
-$(ARTICLES): article.xml
-
-index.html: index.xml $(ARTICLES) $(VERSIONS)
-	sblg -o- -t index.xml $(ARTICLES) $(VERSIONS) | \
-		sed -e "s!@VERSION@!$(VERSION)!g" -e "s!@VDATE@!$(VDATE)!g" >$@
-
 atom.xml: $(VERSIONS)
 	sblg -o $@ -a $(VERSIONS)
 
-.1.1.html:
-	mandoc -Thtml $< >$@
+sintl.1.html: sintl.1
+	mandoc -Thtml sintl.1 >$@
+
+index.html: index.xml
+	sblg -t index.xml -o $@ $(VERSIONS)
+
+index.fr.html: index.xml
+	sblg -t index.xml -o- $(VERSIONS) | ./sintl -j fr.xliff >$@
 
 clean:
-	rm -f sintl $(ATOM) $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
+	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 	rm -f config.h config.log
 	rm -rf *.dSYM

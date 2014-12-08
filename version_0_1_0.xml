@@ -1,0 +1,11 @@
+<article data-sblg-article="1" data-sblg-tags="version">
+	<header>
+		<h1>0.1.0</h1>
+		<address>Kristaps Dzonsons</address>
+		<time datetime="2014-12-08">2014-12-08</time>
+	</header>
+	<aside>
+		Initial public release.
+		This utility is very experimental for the time being, but <q>works for me</q>.
+	</aside>
+</article>
