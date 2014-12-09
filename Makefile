@@ -1,21 +1,24 @@
-VERSION 	 = 0.1.0
-VDATE 		 = 2014-11-29
+VERSION 	 = 0.1.1
+VDATE 		 = 2014-12-09
 PREFIX 		 = /usr/local
 CFLAGS 		+= -g -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings 
 OBJS		 = compat-reallocarray.o \
 		   compat-strlcat.o \
 		   compat-strlcpy.o \
 		   extract.o \
-		   main.o 
+		   main.o \
+		   results.o 
 SRCS		 = compat-reallocarray.c \
 		   compat-strlcat.c \
 		   compat-strlcpy.c \
 		   extract.c \
-		   main.c
+		   main.c \
+		   results.c
 TESTS 		 = test-reallocarray.c \
       		   test-strlcat.c \
       		   test-strlcpy.c 
-VERSIONS	 = version_0_1_0.xml 
+VERSIONS	 = version_0_1_0.xml \
+		   version_0_1_1.xml
 XMLS		 = index.xml
 HTMLS 		 = index.html index.fr.html sintl.1.html
 CSSS 		 = index.css 

@@ -30,7 +30,7 @@
 The
 .Nm
 utility either translates HTML5 files, extracts translatable components,
-or updates translation files.
+or updates (union-merges) translation files.
 Usually, one extracts translatable strings with
 .Fl e ,
 fills in translations, then joins translations and untranslated files
@@ -59,6 +59,8 @@ with input files, emitting translations to standard output.
 Updates the XLIFF
 .Ar file
 with new translatable strings in the input files.
+This merges existing and new terms both ways: if a new word is found in
+the inputs, it is added; existing words in the XLIFF file are retained.
 .It Ar
 XML input files to be translated or mined for translatable information.
 .El

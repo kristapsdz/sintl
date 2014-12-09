@@ -16,8 +16,8 @@
 		</header>
 		<article>
 			<p>
-				<a href="sintl.1.html"><span itemprop="name">sintl</span>(1)</a> is <span itemprop="description">a simple UNIX
-					utility for managing HTML5 translations</span>.
+				<a href="sintl.1.html"><span itemprop="name">sintl</span>(1)</a> is <span itemprop="description"
+					its:translate="yes">a simple UNIX utility for managing HTML5 translations</span>.
 				It works similarly to <a href="http://itstool.org/">itstool</a>, except that it's built for HTML5, is in ISO C
 				and <a href="http://opensource.org/licenses/ISC" rel="license">ISC</a> licensed, and depends only on <a
 					href="http://expat.sourceforge.net/">libexpat</a>.
@@ -45,6 +45,7 @@
 				The latest versions are as follows:
 			</p>
 			<nav data-sblg-nav="1" data-sblg-navsz="2" data-sblg-navcontent="1">
+				<i class="fa fa-fw fa-clock-o"></i> 
 				Version <span class="version">${sblg-title}</span> (<time datetime="${sblg-date}">${sblg-date}</time>): ${sblg-aside}
 			</nav>
 		</article>
