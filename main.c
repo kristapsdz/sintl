@@ -1,6 +1,6 @@
 /*	$Id$ */
 /*
- * Copyright (c) 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014, 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,11 +17,17 @@
 #include "config.h"
 
 #include <assert.h>
+#ifdef HAVE_SANDBOX
+# include <sandbox.h>
+#endif
 #include <expat.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_PLEDGE
+# include <unistd.h>
+#endif
 
 #include "extern.h"
 
@@ -31,6 +37,38 @@ enum	op {
 	OP_UPDATE
 };
 
+#if defined(HAVE_SANDBOX)
+static void
+sandbox(void)
+{
+	char	*ep;
+	int	 rc;
+
+	rc = sandbox_init(kSBXProfileNoNetwork, SANDBOX_NAMED, &ep);
+	if (0 == rc)
+		return;
+	perror(ep);
+	sandbox_free_error(ep);
+	exit(EXIT_FAILURE);
+}
+#elif defined (HAVE_PLEDGE)
+static void
+sandbox(void)
+{
+
+	if (-1 == pledge("stdio rpath", NULL)) {
+		perror("pledge");
+		exit(EXIT_FAILURE);
+	}
+}
+#else
+static void
+sandbox(void)
+{
+	/* Do nothing at all. */
+}
+#endif
+
 int
 main(int argc, char *argv[])
 {
@@ -38,6 +76,8 @@ main(int argc, char *argv[])
 	const char	*pname, *xliff;
 	enum op	 	 op;
 	XML_Parser	 p;
+
+	sandbox();
 
 	pname = strrchr(argv[0], '/');
 	if (pname == NULL)
