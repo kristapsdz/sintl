@@ -20,7 +20,7 @@ TESTS 		 = test-pledge.c \
       		   test-strlcpy.c 
 XMLS		 = index.xml
 HTMLS 		 = index.html index.fr.html sintl.1.html
-CSSS 		 = index.css 
+CSSS 		 = mandoc.css index.css 
 BINDIR 		 = $(PREFIX)/bin
 MANDIR 		 = $(PREFIX)/man
 DOTAR 		 = Makefile \
