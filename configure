@@ -31,6 +31,8 @@ cat config.h.pre
 runtest strlcat STRLCAT ""
 runtest strlcpy STRLCPY ""
 runtest reallocarray REALLOCARRAY ""
+runtest pledge PLEDGE ""
+runtest sandbox SANDBOX ""
 cat config.h.post
 
 exit 0
