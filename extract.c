@@ -55,7 +55,17 @@ static	const char *elemvoid[] = {
 };
 
 static void
-logerr(const char *fn, XML_Parser p, const char *fmt, ...)
+lerr(const char *fn, XML_Parser p, const char *fmt, ...)
+	__attribute__((format(printf, 3, 4)));
+
+static void
+xend(void *dat, const XML_Char *s);
+
+static void
+xstart(void *dat, const XML_Char *s, const XML_Char **atts);
+
+static void
+lerr(const char *fn, XML_Parser p, const char *fmt, ...)
 {
 	va_list	 ap;
 
@@ -74,7 +84,7 @@ static void
 perr(const char *fn, XML_Parser p)
 {
 
-	logerr(fn, p, "%s", XML_ErrorString(XML_GetErrorCode(p)));
+	lerr(fn, p, "%s", XML_ErrorString(XML_GetErrorCode(p)));
 }
 
 /*
@@ -263,21 +273,13 @@ translate(struct hparse *hp)
 			return;
 		}
 
-	fprintf(stderr, "%s:%zu:%zu: No translation found\n",
-		hp->fname, 
-		XML_GetCurrentLineNumber(hp->p),
-		XML_GetCurrentColumnNumber(hp->p));
+	lerr(hp->fname, hp->p, "No translation found");
 	printf("%s", hp->ident);
 }
 
-/*
- * Append an XLIFF word fragment into the nil-terminated ident buffer
- * for later processing.
- */
 static void
-xtext(void *dat, const XML_Char *s, int len)
+append(struct xparse *p, const XML_Char *s, int len)
 {
-	struct xparse	*p = dat;
 
 	if (p->identsz + len + 1 > p->identmax) {
 		p->identmax = p->identsz + len + 1;
@@ -294,6 +296,72 @@ xtext(void *dat, const XML_Char *s, int len)
 }
 
 /*
+ * Append an XLIFF word fragment into the nil-terminated ident buffer
+ * for later processing.
+ */
+static void
+xtext(void *dat, const XML_Char *s, int len)
+{
+
+	append(dat, s, len);
+}
+
+static void
+xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
+{
+	struct xparse	 *p = dat;
+	const XML_Char	**attp;
+
+	if (0 == strcmp(s, "target"))
+		++p->nest;
+
+	append(dat, "<", 1);
+	append(dat, s, strlen(s));
+	for (attp = atts; NULL != *attp; attp += 2) {
+		append(dat, " ", 1);
+		append(dat, attp[0], strlen(attp[0]));
+		append(dat, "=\"", 2);
+		append(dat, attp[1], strlen(attp[1]));
+		append(dat, "\"", 1);
+	}
+	append(dat, ">", 1);
+
+}
+
+static void
+xnestend(void *dat, const XML_Char *s)
+{
+	struct xparse	*p = dat;
+	char		*cp;
+
+	if (strcmp(s, "target") || --p->nest > 0) {
+		append(dat, "</", 2);
+		append(dat, s, strlen(s));
+		append(dat, ">", 1);
+		return;
+	}
+
+	XML_SetElementHandler(p->p, xstart, xend);
+	if (NULL == p->source) {
+		lerr(p->fname, p->p, "No target source");
+		return;
+	}
+	free(p->target);
+	p->target = NULL;
+	if (0 == p->identsz) {
+		lerr(p->fname, p->p, "Empty target element");
+		return;
+	}
+	cp = strip(p->ident, p->identsz);
+	p->identsz = 0;
+	if (NULL == cp) {
+		lerr(p->fname, p->p, "Empty target element");
+		return;
+	}
+	p->target = strdup(cp);
+}
+
+/*
  * Start an element in an XLIFF parse sequence.
  * We only care about <source>, <target>, and <segment>.
  * For the former two, start buffering for content.
@@ -303,12 +371,14 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct xparse	 *p = dat;
 
-	/* FIXME: verify no nesting. */
 	if (0 == strcmp(s, "source"))
 		XML_SetDefaultHandlerExpand(p->p, xtext);
-	else if (0 == strcmp(s, "target"))
+	else if (0 == strcmp(s, "target")) {
+		/* Handle nesting. */
+		p->nest = 1;
 		XML_SetDefaultHandlerExpand(p->p, xtext);
-	else if (0 == strcmp(s, "segment"))
+		XML_SetElementHandler(p->p, xneststart, xnestend);
+	} else if (0 == strcmp(s, "segment"))
 		p->source = p->target = NULL;
 }
 
@@ -329,55 +399,19 @@ xend(void *dat, const XML_Char *s)
 		free(p->source);
 		p->source = NULL;
 		if (0 == p->identsz) {
-			fprintf(stderr, "%s:%zu:%zu: Empty "
-				"source directive\n", p->fname,
-				XML_GetCurrentLineNumber(p->p),
-				XML_GetCurrentColumnNumber(p->p));
+			lerr(p->fname, p->p, "Empty source element");
 			return;
 		} 
 		cp = strip(p->ident, p->identsz);
 		p->identsz = 0;
 		if (NULL == cp) {
-			fprintf(stderr, "%s:%zu:%zu: Empty "
-				"source directive\n", p->fname,
-				XML_GetCurrentLineNumber(p->p),
-				XML_GetCurrentColumnNumber(p->p));
+			lerr(p->fname, p->p, "Empty source element");
 			return;
 		}
 		p->source = strdup(cp);
-	} else if (0 == strcmp(s, "target")) {
-		if (NULL == p->source) {
-			fprintf(stderr, "%s:%zu:%zu: No "
-				"source for target\n", p->fname,
-				XML_GetCurrentLineNumber(p->p),
-				XML_GetCurrentColumnNumber(p->p));
-			return;
-		}
-		free(p->target);
-		p->target = NULL;
-		if (0 == p->identsz) {
-			fprintf(stderr, "%s:%zu:%zu: Empty "
-				"target directive\n", p->fname,
-				XML_GetCurrentLineNumber(p->p),
-				XML_GetCurrentColumnNumber(p->p));
-			return;
-		}
-		cp = strip(p->ident, p->identsz);
-		p->identsz = 0;
-		if (NULL == cp) {
-			fprintf(stderr, "%s:%zu:%zu: Empty "
-				"target directive\n", p->fname,
-				XML_GetCurrentLineNumber(p->p),
-				XML_GetCurrentColumnNumber(p->p));
-			return;
-		}
-		p->target = strdup(cp);
 	} else if (0 == strcmp(s, "segment")) {
 		if (NULL == p->source || NULL == p->target) {
-			fprintf(stderr, "%s:%zu:%zu: Missing "
-				"source or target\n", p->fname,
-				XML_GetCurrentLineNumber(p->p),
-				XML_GetCurrentColumnNumber(p->p));
+			lerr(p->fname, p->p, "No source or target");
 			free(p->source);
 			free(p->target);
 			p->source = p->target = NULL;

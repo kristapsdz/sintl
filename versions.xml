@@ -31,6 +31,7 @@
 			<time datetime="2016-06-12">2016-06-12</time>
 		</header>
 		<aside>
+			Preserve <code>&lt;target&gt;</code>'s nested elements.
 			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and Apple's sandbox.
 			Upload to <a href="https://github.com">GitHub</a>, modernise site and style for manual.
 		</aside>

@@ -81,6 +81,7 @@ struct	xparse {
 	size_t		  identmax; /* maximum word buffer */
 	char		 *source; /* current source in segment */
 	char		 *target; /* current target in segment */
+	size_t		  nest; /* nesting in extraction */
 };
 
 __BEGIN_DECLS

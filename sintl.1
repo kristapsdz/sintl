@@ -151,3 +151,16 @@ The
 utility was written by
 .An Kristaps Dzonsons ,
 .Mt kristaps@bsd.lv .
+.Sh CAVEATS
+In
+.Nm ,
+a <target> directive may have nested elements.
+For example,
+.Bd -literal
+    <segment>
+        <source>message</source>
+        <target><q>Hello, World!</q></target>
+    </segment>
+.Ed
+has the full contents of the target extracted.
+The RFC is silent as to whether this is proper behaviour.
