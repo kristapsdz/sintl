@@ -102,6 +102,45 @@ on the root node and mark each translatable node with
 .Li its:translate="yes" .
 .Sh EXIT STATUS
 .Ex -std
+.Sh EXAMPLES
+Let the following simple file,
+.Pa index.xml ,
+be used as a template for translating into different languages.
+.Bd -literal
+<!DOCTYPE html>
+<html>
+    <head><title its:translate="yes"></title></head>
+    <body its:translate="yes"><p>message</p></body>
+</html>
+.Ed
+.Pp
+We can then create an initial XLIFF file as follows.
+.Pp
+.D1 sintl -e index.xml > index.en.xliff
+.Pp
+Now edit the XLIFF file.
+.Bd -literal
+<xliff xmlns="urn:oasis:names:tc:xliff:document:2.0"
+ version="2.0" srcLang="TODO" trgLang="TODO">
+    <file id="file1">
+        <unit id="unit1">
+        <segment>
+            <source>message</source>
+            <target>Hello, World!</target>
+        </segment>
+        </unit>
+    </file>
+</xliff>
+.Ed
+.Pp
+Finally, create a translated output file as follows.
+.Pp
+.D1 sintl -j index.en.xliff index.xml > index.en.html
+.Pp
+This can be repeated for as many translation files as necessary.
+Many systems will use a baseline translation (e.g., English) as the
+template, but I find it easier to translate based on sources that are
+identifiers, not content.
 .Sh STANDARDS
 HTML5 files to translate must be valid XML-form HTML5 documents
 annotated with a subset of the W3C ITS v2.0 attributes.
