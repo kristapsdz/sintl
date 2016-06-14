@@ -1,5 +1,4 @@
-VERSION 	 = 0.1.1
-VDATE 		 = 2014-12-09
+VERSION 	 = 0.1.2
 PREFIX 		 = /usr/local
 CFLAGS 		+= -g -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings 
 OBJS		 = compat-reallocarray.o \
@@ -14,7 +13,9 @@ SRCS		 = compat-reallocarray.c \
 		   extract.c \
 		   main.c \
 		   results.c
-TESTS 		 = test-reallocarray.c \
+TESTS 		 = test-pledge.c \
+		   test-reallocarray.c \
+		   test-sandbox.c \
       		   test-strlcat.c \
       		   test-strlcpy.c 
 XMLS		 = index.xml
