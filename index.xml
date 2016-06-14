@@ -4,15 +4,15 @@
 		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 		<meta charset="utf-8" /> 
 		<title its:translate="yes">sintl: simple internationalisation utility</title>
-		<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
-		<link rel="stylesheet" href="index.css" type="text/css" />
-		<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" />
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alegreya+Sans:300,300italic,400" />
+		<link rel="stylesheet" href="index.css" />
 	</head>
 	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication">
 		<header>
-			<div><i class="fa fa-language fa-4x"></i><span its:translate="yes">multi-language content</span></div>
-			<div><i class="fa fa-gears fa-4x"></i><a href="sintl.1.html">sintl(1)</a></div>
-			<div><i class="fa fa-html5 fa-4x"></i><span its:translate="yes">translated HTML5</span></div>
+			<div><i class="fa fa-language fa-2x"></i><span its:translate="yes">multi-language content</span></div>
+			<div><i class="fa fa-gears fa-2x"></i><a href="sintl.1.html">sintl(1)</a></div>
+			<div><i class="fa fa-html5 fa-2x"></i><span its:translate="yes">translated HTML5</span></div>
 		</header>
 		<article>
 			<p>
@@ -32,7 +32,7 @@
 				documents to create translated output.
 			</p>
 			<p>
-				In short, input markup within elements labelled as <code class="prettyprint lang-html">&lt;span
+				In short, input markup within elements labelled as <code>&lt;span
 					its:translate="yes"&gt;this&lt;/span&gt;</code> would be marked for translation.
 				The translation dictionary is just an XML file with key-value pairs.
 				For example, <a href="index.fr.html">index.fr.html</a> holds a partially French-translated page.
@@ -41,7 +41,7 @@
 			<p>
 				To use, download <a itemprop="downloadURL" href="snapshots/sintl.tar.gz">sintl.tar.gz</a> (<a
 					href="snapshots/sintl.tar.gz.sha512">sha512</a>, <a href="snapshots">archives</a>) and run 
-				<code class="prettyprint">make install</code> as usual.
+				<code>make install</code> as usual.
 				The latest versions are as follows:
 			</p>
 			<nav data-sblg-nav="1" data-sblg-navsz="2" data-sblg-navcontent="1">
@@ -50,7 +50,7 @@
 			</nav>
 		</article>
 		<footer>
-			&#169; 2014, <a rel="author" href="http://kristaps.bsd.lv">Kristaps Dzonsons</a>
+			&#169; 2014, 2016 <a rel="author" href="https://kristaps.bsd.lv">Kristaps Dzonsons</a>
 		</footer>
 	</body>
 </html>

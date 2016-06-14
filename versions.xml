@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<articles>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
+			<h1>0.1.0</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2014-12-08">2014-12-08</time>
+		</header>
+		<aside>
+			Initial public release.
+			This utility is very experimental for the time being, but <q>works for me</q>.
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
+			<h1>0.1.1</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2014-12-09">2014-12-09</time>
+		</header>
+		<aside>
+			Cleaned up internals for readability (no fixes).
+			Added some missing error-message reporting.
+			Also have the -<b>u</b> merge option merge both ways: if a new entry is found, it is merged into the XLIFF file; if it already
+			exists in the XLIFF file, it is kept as-is.
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
+			<h1>0.1.2</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2016-06-12">2016-06-12</time>
+		</header>
+		<aside>
+			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and Apple's sandbox.
+			Upload to <a href="https://github.com">GitHub</a>, modernise site and style for manual.
+		</aside>
+	</article>
+</articles>

@@ -17,8 +17,6 @@ SRCS		 = compat-reallocarray.c \
 TESTS 		 = test-reallocarray.c \
       		   test-strlcat.c \
       		   test-strlcpy.c 
-VERSIONS	 = version_0_1_0.xml \
-		   version_0_1_1.xml
 XMLS		 = index.xml
 HTMLS 		 = index.html index.fr.html sintl.1.html
 CSSS 		 = index.css 
@@ -68,17 +66,17 @@ config.h: config.h.pre config.h.post configure $(TESTS)
 
 $(OBJS): extern.h config.h
 
-atom.xml: $(VERSIONS)
-	sblg -o $@ -a $(VERSIONS)
+atom.xml: versions.xml
+	sblg -o $@ -a versions.xml
 
 sintl.1.html: sintl.1
-	mandoc -Thtml sintl.1 >$@
+	mandoc -Ostyle=mandoc.css -Thtml sintl.1 >$@
 
 index.html: index.xml
-	sblg -t index.xml -o $@ $(VERSIONS)
+	sblg -t index.xml -o $@ versions.xml
 
-index.fr.html: index.xml
-	sblg -t index.xml -o- $(VERSIONS) | ./sintl -j fr.xliff >$@
+index.fr.html: index.xml sintl
+	sblg -t index.xml -o- versions.xml | ./sintl -j fr.xliff >$@
 
 clean:
 	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
