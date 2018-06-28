@@ -17,7 +17,7 @@
 #include "config.h"
 
 #include <assert.h>
-#ifdef HAVE_SANDBOX
+#if HAVE_SANDBOX_INIT
 # include <sandbox.h>
 #endif
 #include <expat.h>
@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_PLEDGE
+#if HAVE_PLEDGE
 # include <unistd.h>
 #endif
 
@@ -37,7 +37,7 @@ enum	op {
 	OP_UPDATE
 };
 
-#if defined(HAVE_SANDBOX)
+#if HAVE_SANDBOX_INIT
 static void
 sandbox(void)
 {
@@ -51,7 +51,7 @@ sandbox(void)
 	sandbox_free_error(ep);
 	exit(EXIT_FAILURE);
 }
-#elif defined (HAVE_PLEDGE)
+#elif HAVE_PLEDGE
 static void
 sandbox(void)
 {

@@ -1,23 +1,13 @@
+include Makefile.configure
+
 VERSION 	 = 0.1.2
-PREFIX 		 = /usr/local
-CFLAGS 		+= -g -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings 
-OBJS		 = compat-reallocarray.o \
-		   compat-strlcat.o \
-		   compat-strlcpy.o \
+OBJS		 = compats.o \
 		   extract.o \
 		   main.o \
 		   results.o 
-SRCS		 = compat-reallocarray.c \
-		   compat-strlcat.c \
-		   compat-strlcpy.c \
-		   extract.c \
+SRCS		 = extract.c \
 		   main.c \
 		   results.c
-TESTS 		 = test-pledge.c \
-		   test-reallocarray.c \
-		   test-sandbox.c \
-      		   test-strlcat.c \
-      		   test-strlcpy.c 
 XMLS		 = index.xml
 HTMLS 		 = index.html index.fr.html sintl.1.html
 CSSS 		 = mandoc.css index.css 
@@ -27,10 +17,9 @@ DOTAR 		 = Makefile \
 		   $(SRCS) \
 		   sintl.1 \
 		   extern.h \
+		   compats.c \
 		   configure \
-		   config.h.post \
-		   config.h.pre \
-		   $(TESTS)
+		   tests.c
 
 sintl: $(OBJS)
 	$(CC) -o $@ $(OBJS) -lexpat
@@ -61,11 +50,7 @@ sintl.tar.gz:
 sintl.tar.gz.sha512: sintl.tar.gz
 	openssl dgst -sha512 sintl.tar.gz >$@
 
-config.h: config.h.pre config.h.post configure $(TESTS)
-	rm -f config.log
-	CC="$(CC)" CFLAGS="$(CFLAGS)" ./configure
-
-$(OBJS): extern.h config.h
+$(OBJS): extern.h
 
 atom.xml: versions.xml
 	sblg -o $@ -a versions.xml
@@ -81,5 +66,6 @@ index.fr.html: index.xml sintl
 
 clean:
 	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
-	rm -f config.h config.log
-	rm -rf *.dSYM
+
+distclean: clean
+	rm -f Makefile.configure config.h config.log
