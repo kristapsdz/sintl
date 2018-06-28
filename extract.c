@@ -191,14 +191,17 @@ strip(char *cp, size_t sz)
 	}
 
 	if (0 == sz)
-		return(NULL);
+		return NULL;
 
 	end = start + sz - 1;
 	while (end > start && isspace(*end))
 		*end-- = '\0';
 
-	assert(end > start);
-	return(start);
+	assert(end >= start);
+	if (end == start)
+		return NULL;
+
+	return start;
 }
 
 /*
