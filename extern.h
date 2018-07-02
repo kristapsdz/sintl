@@ -65,6 +65,11 @@ struct	hparse {
 	size_t		  xliffsz; /* number of translation patrs */
 };
 
+enum	xnesttype {
+	NEST_TARGET,
+	NEST_SOURCE
+};
+
 /*
  * Parse tracker for an XLIFF file that we're parsing.
  * This will be passed in (assuming success) to the "struct hparse" as
@@ -82,6 +87,7 @@ struct	xparse {
 	char		 *source; /* current source in segment */
 	char		 *target; /* current target in segment */
 	size_t		  nest; /* nesting in extraction */
+	enum xnesttype	  nesttype; /* type of nesting */
 };
 
 __BEGIN_DECLS

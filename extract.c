@@ -1,6 +1,6 @@
 /*	$Id$ */
 /*
- * Copyright (c) 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014, 2018 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -56,6 +56,69 @@ static	const char *elemvoid[] = {
 	"wbr",
 	NULL
 };
+
+#if 0
+/*
+ * List of phrasing content elements that are accepted as
+ * withinText="yes" by default.
+ * See ITS v2.0 section 2.5.3.
+ */
+static	const char *phrasing[] = {
+	"a",
+	"abbr",
+	"area",
+	"audio",
+	"b",
+	"bdi",
+	"bdo",
+	"br",
+	"button",
+	"canvas",
+	"cite",
+	"code",
+	"data",
+	"datalist",
+	"del",
+	"dfn",
+	"em",
+	"embed",
+	"i",
+	/* "iframe", */
+	"img",
+	"input",
+	"ins",
+	"kbd",
+	"keygen",
+	"label",
+	"map",
+	"mark",
+	"math",
+	"meter",
+	/* "noscript", */
+	"object",
+	"output",
+	"progress",
+	"q",
+	"ruby",
+	"s",
+	"samp",
+	/* "script", */
+	"select",
+	"small",
+	"span",
+	"strong",
+	"sub",
+	"sup",
+	"svg",
+	/* "textarea", */
+	"time",
+	"u",
+	"var",
+	"video",
+	"wbr",
+	NULL
+};
+#endif
 
 static void
 lerr(const char *fn, XML_Parser p, const char *fmt, ...)
@@ -343,8 +406,11 @@ static void
 xnestend(void *dat, const XML_Char *s)
 {
 	struct xparse	*p = dat;
+	const char	*rtype;
 
-	if (strcmp(s, "target") || --p->nest > 0) {
+	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
+
+	if (strcmp(s, rtype) || --p->nest > 0) {
 		append(dat, "</", 2);
 		append(dat, s, strlen(s));
 		append(dat, ">", 1);
@@ -354,19 +420,21 @@ xnestend(void *dat, const XML_Char *s)
 	XML_SetElementHandler(p->p, xstart, xend);
 	XML_SetDefaultHandlerExpand(p->p, NULL);
 
-	if (NULL == p->source) {
-		lerr(p->fname, p->p, "No target source");
-		return;
+	if (NEST_TARGET == p->nesttype) {
+		free(p->target);
+		p->target = NULL;
+		p->target = dotext(p->ident, p->identsz, 0);
+		p->identsz = 0;
+		if (NULL == p->target)
+			lerr(p->fname, p->p, "empty <target>");
+	} else {
+		free(p->source);
+		p->source = NULL;
+		p->source = dotext(p->ident, p->identsz, 0);
+		p->identsz = 0;
+		if (NULL == p->source)
+			lerr(p->fname, p->p, "empty <source>");
 	}
-
-	free(p->target);
-	p->target = NULL;
-
-	p->target = dotext(p->ident, p->identsz, 0);
-	p->identsz = 0;
-
-	if (NULL == p->target)
-		lerr(p->fname, p->p, "Empty target element");
 }
 
 /*
@@ -380,10 +448,13 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	struct xparse	 *p = dat;
 
 	if (0 == strcmp(s, "source")) {
-		XML_SetDefaultHandlerExpand(p->p, xtext);
-	} else if (0 == strcmp(s, "target")) {
-		/* Handle nesting. */
 		p->nest = 1;
+		p->nesttype = NEST_SOURCE;
+		XML_SetDefaultHandlerExpand(p->p, xtext);
+		XML_SetElementHandler(p->p, xneststart, xnestend);
+	} else if (0 == strcmp(s, "target")) {
+		p->nest = 1;
+		p->nesttype = NEST_TARGET;
 		XML_SetDefaultHandlerExpand(p->p, xtext);
 		XML_SetElementHandler(p->p, xneststart, xnestend);
 	} else if (0 == strcmp(s, "segment"))
@@ -404,18 +475,7 @@ xend(void *dat, const XML_Char *s)
 
 	XML_SetDefaultHandlerExpand(p->p, NULL);
 
-	if (0 == strcmp(s, "source")) {
-		free(p->source);
-		p->source = NULL;
-		if (0 == p->identsz) {
-			lerr(p->fname, p->p, "Empty source element");
-			return;
-		} 
-		p->source = dotext(p->ident, p->identsz, 0);
-		p->identsz = 0;
-		if (NULL == p->source)
-			lerr(p->fname, p->p, "Empty source element");
-	} else if (0 == strcmp(s, "segment")) {
+	if (0 == strcmp(s, "segment")) {
 		if (NULL == p->source || NULL == p->target) {
 			lerr(p->fname, p->p, "No source or target");
 			free(p->source);
