@@ -2,13 +2,25 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
-			<h1>0.1.0</h1>
+			<h1>0.1.3</h1>
 			<address>Kristaps Dzonsons</address>
-			<time datetime="2014-12-08">2014-12-08</time>
+			<time datetime="2018-06-28">2018-06-28</time>
 		</header>
 		<aside>
-			Initial public release.
-			This utility is very experimental for the time being, but <q>works for me</q>.
+			Use <a href="https://github.com/kristapsdz/oconfigure">oconfigure</a> for configuration.
+			Fix an assertion failure.
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
+			<h1>0.1.2</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2016-06-12">2016-06-12</time>
+		</header>
+		<aside>
+			Preserve <code>&lt;target&gt;</code>'s nested elements.
+			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and Apple's sandbox.
+			Upload to <a href="https://github.com">GitHub</a>, modernise site and style for manual.
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -26,14 +38,13 @@
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
-			<h1>0.1.2</h1>
+			<h1>0.1.0</h1>
 			<address>Kristaps Dzonsons</address>
-			<time datetime="2016-06-12">2016-06-12</time>
+			<time datetime="2014-12-08">2014-12-08</time>
 		</header>
 		<aside>
-			Preserve <code>&lt;target&gt;</code>'s nested elements.
-			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and Apple's sandbox.
-			Upload to <a href="https://github.com">GitHub</a>, modernise site and style for manual.
+			Initial public release.
+			This utility is very experimental for the time being, but <q>works for me</q>.
 		</aside>
 	</article>
 </articles>
