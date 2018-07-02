@@ -21,6 +21,9 @@
 
 #include <assert.h>
 #include <ctype.h>
+#if HAVE_ERR
+# include <err.h>
+#endif
 #include <expat.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -175,33 +178,47 @@ xparse_free(struct xparse *xp)
 }
 
 /*
- * Strip the nil-terminated character string "cp" of length "sz" of its
- * leading and trailing whitespace.
- * Return NULL if there's nothing left when we're done.
+ * Normalise text segment.
+ * If we're in "preserve" (non-zero) mode, then this is strdup.
+ * If we're not, then we replace all white-space with spaces, and
+ * collapse all contiguous white-space into a single space.
+ * Returns NULL if there's no text to return (i.e., empty).
  */
 static char *
-strip(char *cp, size_t sz)
+dotext(const char *buf, size_t sz, int preserve)
 {
-	char	*start, *end;
+	size_t	 i, j;
+	char	*ret;
 
-	start = cp;
-	while (isspace(*start)) {
-		start++;
-		sz--;
+	if (preserve) {
+		if (0 == sz)
+			return NULL;
+		if (NULL == (ret = strdup(buf)))
+			err(EXIT_FAILURE, NULL);
+		return ret;
 	}
 
-	if (0 == sz)
+	for (i = 0; i < sz; i++)
+		if ( ! isspace((unsigned char)buf[i]))
+			break;
+	
+	if (i == sz) 
 		return NULL;
 
-	end = start + sz - 1;
-	while (end > start && isspace(*end))
-		*end-- = '\0';
+	if (NULL == (ret = malloc(sz + 1)))
+		err(EXIT_FAILURE, NULL);
 
-	assert(end >= start);
-	if (end == start)
-		return NULL;
+	for (i = j = 0; i < sz; j++) {
+		ret[j] = buf[i];
+		if ( ! isspace((unsigned char)buf[i++]))
+			continue;
+		ret[j] = ' ';
+		while (i < sz && isspace((unsigned char)buf[i]))
+			i++;
+	}
 
-	return start;
+	ret[j] = '\0';
+	return ret;
 }
 
 /*
@@ -218,6 +235,7 @@ cache(struct hparse *p)
 	assert(p->identsz > 0);
 
 	/* Expand word list, if necessary. */
+
 	if (p->wordsz + 1 > p->wordmax) {
 		p->wordmax += 512;
 		p->words = reallocarray
@@ -228,25 +246,12 @@ cache(struct hparse *p)
 		}
 	}
 
-	/* 
-	 * If we're not preserving space, then strip the spaces out and
-	 * store them.
-	 * Otherwise, use the original identifier verbatim.
-	 */
-	cp = (0 == p->stack[p->stacksz - 1].preserve) ?
-		strip(p->ident, p->identsz) : p->ident;
+	cp = dotext(p->ident, p->identsz,
+		p->stack[p->stacksz - 1].preserve);
 	p->identsz = 0;
 
-	/* Ignore completely-empty identifier. */
-	if (NULL == cp)
-		return;
-
-	p->words[p->wordsz] = strdup(cp);
-	if (NULL == p->words[p->wordsz]) {
-		perror(NULL);
-		exit(EXIT_FAILURE);
-	}
-	p->wordsz++;
+	if (NULL != cp)
+		p->words[p->wordsz++] = cp;
 }
 
 /*
@@ -264,20 +269,23 @@ translate(struct hparse *hp)
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
 
-	cp = (0 == hp->stack[hp->stacksz - 1].preserve) ?
-		strip(hp->ident, hp->identsz) : hp->ident;
+	cp = dotext(hp->ident, hp->identsz, 
+		hp->stack[hp->stacksz - 1].preserve);
 	hp->identsz = 0;
 
 	if (NULL == cp)
 		return;
+
 	for (i = 0; i < hp->xliffsz; i++)
 		if (0 == strcmp(hp->xliffs[i].source, cp)) {
 			printf("%s", hp->xliffs[i].target);
+			free(cp);
 			return;
 		}
 
 	lerr(hp->fname, hp->p, "No translation found");
 	printf("%s", hp->ident);
+	free(cp);
 }
 
 static void
@@ -335,7 +343,6 @@ static void
 xnestend(void *dat, const XML_Char *s)
 {
 	struct xparse	*p = dat;
-	char		*cp;
 
 	if (strcmp(s, "target") || --p->nest > 0) {
 		append(dat, "</", 2);
@@ -345,23 +352,21 @@ xnestend(void *dat, const XML_Char *s)
 	}
 
 	XML_SetElementHandler(p->p, xstart, xend);
+	XML_SetDefaultHandlerExpand(p->p, NULL);
+
 	if (NULL == p->source) {
 		lerr(p->fname, p->p, "No target source");
 		return;
 	}
+
 	free(p->target);
 	p->target = NULL;
-	if (0 == p->identsz) {
-		lerr(p->fname, p->p, "Empty target element");
-		return;
-	}
-	cp = strip(p->ident, p->identsz);
+
+	p->target = dotext(p->ident, p->identsz, 0);
 	p->identsz = 0;
-	if (NULL == cp) {
+
+	if (NULL == p->target)
 		lerr(p->fname, p->p, "Empty target element");
-		return;
-	}
-	p->target = strdup(cp);
 }
 
 /*
@@ -374,9 +379,9 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct xparse	 *p = dat;
 
-	if (0 == strcmp(s, "source"))
+	if (0 == strcmp(s, "source")) {
 		XML_SetDefaultHandlerExpand(p->p, xtext);
-	else if (0 == strcmp(s, "target")) {
+	} else if (0 == strcmp(s, "target")) {
 		/* Handle nesting. */
 		p->nest = 1;
 		XML_SetDefaultHandlerExpand(p->p, xtext);
@@ -396,7 +401,8 @@ static void
 xend(void *dat, const XML_Char *s)
 {
 	struct xparse	*p = dat;
-	char		*cp;
+
+	XML_SetDefaultHandlerExpand(p->p, NULL);
 
 	if (0 == strcmp(s, "source")) {
 		free(p->source);
@@ -405,13 +411,10 @@ xend(void *dat, const XML_Char *s)
 			lerr(p->fname, p->p, "Empty source element");
 			return;
 		} 
-		cp = strip(p->ident, p->identsz);
+		p->source = dotext(p->ident, p->identsz, 0);
 		p->identsz = 0;
-		if (NULL == cp) {
+		if (NULL == p->source)
 			lerr(p->fname, p->p, "Empty source element");
-			return;
-		}
-		p->source = strdup(cp);
 	} else if (0 == strcmp(s, "segment")) {
 		if (NULL == p->source || NULL == p->target) {
 			lerr(p->fname, p->p, "No source or target");
