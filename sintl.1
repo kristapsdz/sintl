@@ -1,6 +1,6 @@
 .\"	$Id$
 .\"
-.\" Copyright (c) 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2014, 2018 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -29,16 +29,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility either translates HTML5 files, extracts translatable components,
-or updates (union-merges) translation files.
-Usually, one extracts translatable strings with
+utility extracts translatable strings from HTML5 with
 .Fl e ,
-fills in translations, then joins translations and untranslated files
-with
-.Fl j .
-After adding or deleting translations, one uses
-.Fl u
-to keep the translation files up to date.
+joins translations (XLIFF files) and untranslated files (HTML5) with
+.Fl j ,
+and merges new or removed translations (XLIFF) with
+.Fl u .
 By default,
 .Nm
 behaves as if
