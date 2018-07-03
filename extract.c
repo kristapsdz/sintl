@@ -536,36 +536,46 @@ htext(void *dat, const XML_Char *s, int len)
 }
 
 /*
- * Start an element that's used in document we're translating or
- * scanning for translations.
+ * Start an element in aa document we're translating or extracting.
  */
 static void
 hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct hparse	 *p = dat;
 	const XML_Char	**attp;
-	int		  nt, pres;
+	int		  dotrans = 0, preserve = 0, phrase = 0;
 	const char	**elems;
 
-#if 0
+	/*
+	 * If we're already in a translating context and we have one of
+	 * the protected phrase elements, then append the element to our
+	 * buffer and do no further processing.
+	 */
+
 	if (p->stacksz && p->stack[p->stacksz - 1].translate)
 		for (elems = phrasing; NULL != *elems; elems++)
 			if (0 == strcasecmp(s, *elems)) {
-				happend(p, "<", 1);
-				happend(p, s, strlen(s));
-				for (attp = atts; NULL != *attp; attp += 2) {
-					happend(p, " ", 1);
-					happend(p, attp[0], strlen(attp[0]));
-					happend(p, "=\"", 2);
-					happend(p, attp[1], strlen(attp[1]));
-					happend(p, "\"", 1);
-				}
-				happend(p, ">", 1);
-				return;
+				phrase = 1;
+				break;
 			}
-#endif
 
-	/* Cache/translate any existing keywords. */
+	if (phrase) {
+		happend(p, "<", 1);
+		happend(p, s, strlen(s));
+		for (attp = atts; NULL != *attp; attp += 2) {
+			happend(p, " ", 1);
+			happend(p, attp[0], strlen(attp[0]));
+			happend(p, "=\"", 2);
+			happend(p, attp[1], strlen(attp[1]));
+			happend(p, "\"", 1);
+		}
+		happend(p, ">", 1);
+		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
+			p->stack[p->stacksz - 1].nested++;
+		return;
+	}
+
+	/* Store/translate any existing keywords. */
 
 	if (p->identsz > 0 && POP_JOIN == p->op)
 		translate(p);
@@ -576,6 +586,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	 * If we're translating, then echo the tags.
 	 * Make sure we accomodate for minimisations.
 	 */
+
 	if (POP_JOIN == p->op) {
 		printf("<%s", s);
 		for (attp = atts; NULL != *attp; attp += 2) 
@@ -586,30 +597,33 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	}
 
 	/* Check if we should begin translating. */
-	for (nt = pres = 0, attp = atts; NULL != *attp; attp += 2)
+
+	for (attp = atts; NULL != *attp; attp += 2)
 		if (0 == strcmp(attp[0], "its:translate")) {
 			if (0 == strcasecmp(attp[1], "yes"))
-				nt = 1;
+				dotrans = 1;
 			else if (0 == strcasecmp(attp[1], "no"))
-				nt = -1;
+				dotrans = -1;
 		} else if (0 == strcmp(attp[0], "xml:space")) {
 			if (0 == strcasecmp(attp[1], "preserve"))
-				pres = 1;
+				preserve = 1;
 			else if (0 == strcasecmp(attp[1], "default"))
-				pres = -1;
+				preserve = -1;
 		}
 
 	/* Default for whole document. */
-	if (0 == p->stacksz && 0 == nt)
-		nt = -1;
-	if (0 == p->stacksz && 0 == pres)
-		pres = -1;
+
+	if (0 == p->stacksz && 0 == dotrans)
+		dotrans = -1;
+	if (0 == p->stacksz && 0 == preserve)
+		preserve = -1;
 
 	/*
 	 * If we're not changing our translation context, see if we've
 	 * entered a nested context and mark it, if so.
 	 */
-	if (0 == nt && 0 == pres) {
+
+	if (0 == dotrans && 0 == preserve) {
 		assert(p->stacksz > 0);
 		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
@@ -617,10 +631,11 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	}
 
 	/* By default, inherit from parent. */
-	if (0 == nt)
-		nt = p->stack[p->stacksz - 1].translate;
-	if (0 == pres)
-		pres = p->stack[p->stacksz - 1].preserve;
+
+	if (0 == dotrans)
+		dotrans = p->stack[p->stacksz - 1].translate;
+	if (0 == preserve)
+		preserve = p->stack[p->stacksz - 1].preserve;
 
 	/*
 	 * Create our new translation context.
@@ -628,11 +643,12 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	 * TODO: if we're in a new translation context that's the same
 	 * as the existing one, just increment our nestedness.
 	 */
+
 	if (NULL == (p->stack[p->stacksz].name = strdup(s)))
 		err(EXIT_FAILURE, NULL);
 
-	p->stack[p->stacksz].translate = 1 == nt;
-	p->stack[p->stacksz].preserve = 1 == pres;
+	p->stack[p->stacksz].translate = 1 == dotrans;
+	p->stack[p->stacksz].preserve = 1 == preserve;
 	p->stack[p->stacksz++].nested = 0;
 	if (p->stacksz == 64) {
 		/* FIXME */
@@ -642,47 +658,68 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 }
 
 /*
- * End an element for a document we're either translating or are
- * scanning for translatable parts.
+ * End an element an input document slated for translation or
+ * extraction.
  */
 static void
 hend(void *dat, const XML_Char *s)
 {
 	struct hparse	 *p = dat;
 	const char	**elems;
+	int 		  phrase = 0, end = 0;
 
-#if 0
-	if (p->stacksz && p->stack[p->stacksz - 1].translate)
+	assert(p->stacksz > 0);
+
+	/* Set if we're at the end of our current scope. */
+
+	end = 0 == strcmp(p->stack[p->stacksz - 1].name, s) && 
+		0 == p->stack[p->stacksz - 1].nested;
+
+	/* Set if we're ending a phrasing element in a translation. */
+
+	if (p->stack[p->stacksz - 1].translate)
 		for (elems = phrasing; NULL != *elems; elems++)
 			if (0 == strcasecmp(s, *elems)) {
-				happend(p, "</", 2);
-				happend(p, s, strlen(s));
-				happend(p, ">", 1);
-				return;
+				phrase = 1;
+				break;
 			}
-#endif
 
-	/* Flush any existing keywords. */
+	/*
+	 * If we're not ending a scope and we have phrasing content in a
+	 * translation, then put the element itself into the buffer.
+	 */
+
+	if (0 == end && phrase) {
+		happend(p, "</", 2);
+		happend(p, s, strlen(s));
+		happend(p, ">", 1);
+		return;
+	}
+
+	/* 
+	 * We've ended an element that might have contained content that
+	 * we want to translate.
+	 * First, flush any existing translatable content.
+	 */
+
 	if (p->identsz > 0 && POP_JOIN == p->op)
 		translate(p);
 	else if (p->identsz > 0)
-		cache(p);
+		store(p);
 
-	/* Echo if we're translating, unless we've already closed. */
+	/* Echo if we're translating unless we've already closed. */
+
 	if (POP_JOIN == p->op && ! xmlvoid(s))
 		printf("</%s>", s);
 
-	/* Check if we're closing a translation context. */
-	assert(p->stacksz > 0);
+	/* 
+	 * Check if we're closing a translation context.
+	 * If we are, decrement nesting.
+	 * Otherwise, free the saved context name and pop context.
+	 */
+
 	if (strcmp(p->stack[p->stacksz - 1].name, s))
 		return;
-
-	/* 
-	 * If we're in a nested translation context, just decrement the
-	 * nesting size.
-	 * Otherwise, free the saved context name and decrement to the
-	 * prior translation context.
-	 */
 	if (0 == p->stack[p->stacksz - 1].nested)
 		free(p->stack[--p->stacksz].name);
 	else
