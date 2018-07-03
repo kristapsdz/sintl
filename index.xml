@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html its:translate="no">
+<html xmlns:its="http://www.w3.org/2005/11/its">
 	<head>
 		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 		<meta charset="utf-8" /> 
-		<title its:translate="yes">sintl: simple internationalisation utility</title>
+		<title>sintl: simple internationalisation utility</title>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" />
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alegreya+Sans:300,300italic,400" />
 		<link rel="stylesheet" href="index.css" />
 	</head>
-	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication">
+	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication" its:translate="no">
 		<header>
 			<div><i class="fa fa-language fa-2x"></i><span its:translate="yes">multi-language content</span></div>
 			<div><i class="fa fa-gears fa-2x"></i><a href="sintl.1.html">sintl(1)</a></div>
