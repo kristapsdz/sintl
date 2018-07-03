@@ -57,7 +57,6 @@ static	const char *elemvoid[] = {
 	NULL
 };
 
-#if 0
 /*
  * List of phrasing content elements that are accepted as
  * withinText="yes" by default.
@@ -118,7 +117,6 @@ static	const char *phrasing[] = {
 	"wbr",
 	NULL
 };
-#endif
 
 static void
 lerr(const char *fn, XML_Parser p, const char *fmt, ...)
@@ -184,10 +182,8 @@ hparse_alloc(XML_Parser p, enum pop op)
 {
 	struct hparse	*hp;
 
-	if (NULL == (hp = calloc(1, sizeof(struct hparse)))) {
-		perror(NULL);
-		exit(EXIT_FAILURE);
-	}
+	if (NULL == (hp = calloc(1, sizeof(struct hparse))))
+		err(EXIT_FAILURE, NULL);
 
 	hp->p = p;
 	hp->op = op;
@@ -214,10 +210,8 @@ xparse_alloc(const char *xliff, XML_Parser p)
 {
 	struct xparse	*xp;
 
-	if (NULL == (xp = calloc(1, sizeof(struct xparse)))) {
-		perror(NULL);
-		exit(EXIT_FAILURE);
-	}
+	if (NULL == (xp = calloc(1, sizeof(struct xparse))))
+		err(EXIT_FAILURE, NULL);
 
 	xp->fname = xliff;
 	xp->p = p;
@@ -285,12 +279,12 @@ dotext(const char *buf, size_t sz, int preserve)
 }
 
 /*
- * We're scanning a document and want to cache a source word that we'll
+ * We're scanning a document and want to store a source word that we'll
  * eventually be putting into a template XLIFF file.
  * Do so, being sensitive to the current space-preservation state.
  */
 static void
-cache(struct hparse *p)
+store(struct hparse *p)
 {
 	char	*cp;
 
@@ -303,10 +297,8 @@ cache(struct hparse *p)
 		p->wordmax += 512;
 		p->words = reallocarray
 			(p->words, p->wordmax, sizeof(char *));
-		if (NULL == p->words) {
-			perror(NULL);
-			exit(EXIT_FAILURE);
-		}
+		if (NULL == p->words)
+			err(EXIT_FAILURE, NULL);
 	}
 
 	cp = dotext(p->ident, p->identsz,
@@ -352,21 +344,32 @@ translate(struct hparse *hp)
 }
 
 static void
-append(struct xparse *p, const XML_Char *s, int len)
+append(char **buf, size_t *sz, size_t *max, const XML_Char *s, int len)
 {
 
-	if (p->identsz + len + 1 > p->identmax) {
-		p->identmax = p->identsz + len + 1;
-		p->ident = realloc(p->ident, p->identmax);
-		if (NULL == p->ident) {
-			perror(NULL);
-			exit(EXIT_FAILURE);
-		}
+	if (*sz + len + 1 > *max) {
+		*max = *sz + len + 1;
+		if (NULL == (*buf = realloc(*buf, *max)))
+			err(EXIT_FAILURE, NULL);
 	}
 
-	memcpy(p->ident + p->identsz, s, len);
-	p->identsz += len;
-	p->ident[p->identsz] = '\0';
+	memcpy(*buf + *sz, s, len);
+	*sz += len;
+	(*buf)[*sz] = '\0';
+}
+
+static void
+xappend(struct xparse *p, const XML_Char *s, int len)
+{
+
+	append(&p->ident, &p->identsz, &p->identmax, s, len);
+}
+
+static void
+happend(struct hparse *p, const XML_Char *s, int len)
+{
+
+	append(&p->ident, &p->identsz, &p->identmax, s, len);
 }
 
 /*
@@ -377,7 +380,7 @@ static void
 xtext(void *dat, const XML_Char *s, int len)
 {
 
-	append(dat, s, len);
+	xappend(dat, s, len);
 }
 
 static void
@@ -386,19 +389,20 @@ xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 	struct xparse	 *p = dat;
 	const XML_Char	**attp;
 
+	/* FIXME */
 	if (0 == strcmp(s, "target"))
 		++p->nest;
 
-	append(dat, "<", 1);
-	append(dat, s, strlen(s));
+	xappend(dat, "<", 1);
+	xappend(dat, s, strlen(s));
 	for (attp = atts; NULL != *attp; attp += 2) {
-		append(dat, " ", 1);
-		append(dat, attp[0], strlen(attp[0]));
-		append(dat, "=\"", 2);
-		append(dat, attp[1], strlen(attp[1]));
-		append(dat, "\"", 1);
+		xappend(dat, " ", 1);
+		xappend(dat, attp[0], strlen(attp[0]));
+		xappend(dat, "=\"", 2);
+		xappend(dat, attp[1], strlen(attp[1]));
+		xappend(dat, "\"", 1);
 	}
-	append(dat, ">", 1);
+	xappend(dat, ">", 1);
 
 }
 
@@ -411,9 +415,9 @@ xnestend(void *dat, const XML_Char *s)
 	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
 
 	if (strcmp(s, rtype) || --p->nest > 0) {
-		append(dat, "</", 2);
-		append(dat, s, strlen(s));
-		append(dat, ">", 1);
+		xappend(dat, "</", 2);
+		xappend(dat, s, strlen(s));
+		xappend(dat, ">", 1);
 		return;
 	}
 
@@ -489,10 +493,8 @@ xend(void *dat, const XML_Char *s)
 				(p->xliffs, 
 				 p->xliffmax,
 				 sizeof(struct xliff));
-			if (NULL == p->xliffs) {
-				perror(NULL);
-				exit(EXIT_FAILURE);
-			}
+			if (NULL == p->xliffs)
+				err(EXIT_FAILURE, NULL);
 		}
 		p->xliffs[p->xliffsz].source = p->source;
 		p->xliffs[p->xliffsz].target = p->target;
@@ -524,10 +526,8 @@ htext(void *dat, const XML_Char *s, int len)
 	if (p->identsz + len + 1 > p->identmax) {
 		p->identmax = p->identsz + len + 1;
 		p->ident = realloc(p->ident, p->identmax);
-		if (NULL == p->ident) {
-			perror(NULL);
-			exit(EXIT_FAILURE);
-		}
+		if (NULL == p->ident)
+			err(EXIT_FAILURE, NULL);
 	}
 
 	memcpy(p->ident + p->identsz, s, len);
@@ -545,12 +545,32 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	struct hparse	 *p = dat;
 	const XML_Char	**attp;
 	int		  nt, pres;
+	const char	**elems;
+
+#if 0
+	if (p->stacksz && p->stack[p->stacksz - 1].translate)
+		for (elems = phrasing; NULL != *elems; elems++)
+			if (0 == strcasecmp(s, *elems)) {
+				happend(p, "<", 1);
+				happend(p, s, strlen(s));
+				for (attp = atts; NULL != *attp; attp += 2) {
+					happend(p, " ", 1);
+					happend(p, attp[0], strlen(attp[0]));
+					happend(p, "=\"", 2);
+					happend(p, attp[1], strlen(attp[1]));
+					happend(p, "\"", 1);
+				}
+				happend(p, ">", 1);
+				return;
+			}
+#endif
 
 	/* Cache/translate any existing keywords. */
+
 	if (p->identsz > 0 && POP_JOIN == p->op)
 		translate(p);
 	else if (p->identsz > 0)
-		cache(p);
+		store(p);
 
 	/*
 	 * If we're translating, then echo the tags.
@@ -608,10 +628,8 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	 * TODO: if we're in a new translation context that's the same
 	 * as the existing one, just increment our nestedness.
 	 */
-	if (NULL == (p->stack[p->stacksz].name = strdup(s))) {
-		perror(NULL);
-		exit(EXIT_FAILURE);
-	}
+	if (NULL == (p->stack[p->stacksz].name = strdup(s)))
+		err(EXIT_FAILURE, NULL);
 
 	p->stack[p->stacksz].translate = 1 == nt;
 	p->stack[p->stacksz].preserve = 1 == pres;
@@ -630,7 +648,19 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 static void
 hend(void *dat, const XML_Char *s)
 {
-	struct hparse	*p = dat;
+	struct hparse	 *p = dat;
+	const char	**elems;
+
+#if 0
+	if (p->stacksz && p->stack[p->stacksz - 1].translate)
+		for (elems = phrasing; NULL != *elems; elems++)
+			if (0 == strcasecmp(s, *elems)) {
+				happend(p, "</", 2);
+				happend(p, s, strlen(s));
+				happend(p, ">", 1);
+				return;
+			}
+#endif
 
 	/* Flush any existing keywords. */
 	if (p->identsz > 0 && POP_JOIN == p->op)
