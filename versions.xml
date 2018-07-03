@@ -7,8 +7,11 @@
 			<time datetime="2018-06-28">2018-06-28</time>
 		</header>
 		<aside>
-			Use <a href="https://github.com/kristapsdz/oconfigure">oconfigure</a> for configuration.
+			Use <a href="https://github.com/kristapsdz/oconfigure">oconfigure</a> for
+			configuration.
 			Fix an assertion failure.
+			Allow for nested elements in <code>&lt;source&gt;</code> and
+			<code>&lt;target&gt;</code> as defined by the ITS standard.
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -19,8 +22,10 @@
 		</header>
 		<aside>
 			Preserve <code>&lt;target&gt;</code>'s nested elements.
-			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and Apple's sandbox.
-			Upload to <a href="https://github.com">GitHub</a>, modernise site and style for manual.
+			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and
+			Apple's sandbox.
+			Upload to <a href="https://github.com">GitHub</a>, modernise site and style
+			for manual.
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -32,8 +37,9 @@
 		<aside>
 			Cleaned up internals for readability (no fixes).
 			Added some missing error-message reporting.
-			Also have the -<b>u</b> merge option merge both ways: if a new entry is found, it is merged into the XLIFF file; if it already
-			exists in the XLIFF file, it is kept as-is.
+			Also have the -<b>u</b> merge option merge both ways: if a new entry is
+			found, it is merged into the XLIFF file; if it already exists in the XLIFF
+			file, it is kept as-is.
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">

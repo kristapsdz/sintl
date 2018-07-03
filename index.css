@@ -1,11 +1,13 @@
 body, html			{ margin: 0; }
-body				{ background-color: #ccc; 
+body				{ background-color: #f6f6f6; 
 				  font-family: "Alegreya Sans", sans-serif;
-				  font-size: 12pt;
+				  font-size: 14pt;
+				  font-weight: 400;
 				  color: #333; }
 a				{ text-decoration: none; 
-				  color: #336699; }
+				  color: blue; }
 header				{ display: table; 
+				  margin-top: 4rem;
 				  margin-left: auto;
 				  margin-right: auto;
 				  border-spacing: 1em; }
@@ -17,10 +19,10 @@ header > * > *:first-child	{ text-align: center;
 				  color: #666; }
 footer				{ text-align: center;
 				  margin: 1em 0; }
-article				{ border: thin solid #bbb;
-				  border-radius: 4pt;
-				  padding: 1ex;
-				  margin: 0 1em;
+article				{ border-top: thin solid #bbb;
+				  border-bottom: thin solid #bbb;
+				  box-shadow: 0 0 4px #ddd;
+				  padding: 1em 20%;
 				  background-color: #fff; }
 nav ul				{ list-style-type: none; 
 				  padding: 0; }
@@ -28,6 +30,10 @@ nav li + li			{ margin-top: 0.5em; }
 code				{ font-size: 11pt; }
 
 @media only screen and (max-width: 760px), only screen and (max-device-width: 760px) {
-header > * > *			{ font-size: 16pt; }
-article				{ margin: 0 0.1em; }
+  header > * > *		{ font-size: 16pt; }
+  article			{ padding: 1em 10%; }
+}
+
+@media only screen and (max-width: 400px), only screen and (max-device-width: 400px) {
+  article			{ padding: 1em 2%; }
 }
