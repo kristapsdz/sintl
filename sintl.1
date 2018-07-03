@@ -29,12 +29,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility extracts translatable strings from HTML5 with
-.Fl e ,
-joins translations (XLIFF files) and untranslated files (HTML5) with
-.Fl j ,
-and merges new or removed translations (XLIFF) with
-.Fl u .
+utility extracts translatable strings from HTML5 files
+.Pq Fl e ,
+joins XLIFF translation files and untranslated HTML5 files
+.Pq Fl j ,
+and merges new or removed translations
+.Pq Fl u .
 By default,
 .Nm
 behaves as if
@@ -43,26 +43,26 @@ were used.
 Its arguments are as follows:
 .Bl -tag -width -Ds
 .It Fl e
-Extracts translatable strings from input files, emitting the XLIFF
-translation file skeleton to standard output.
+Extracts translatable strings from input HTML5 files, emitting the XLIFF
+translation file skeleton on standard output.
 .It Fl j Ar file
-Join
-.Pq Qq translate
-the translations in the XLIFF
-.Ar file
-with input files, emitting translations to standard output.
+Translate
+.Pq Qq join
+input files using the XLIFF
+.Ar file ,
+emitting translated HTML5 on standard output.
 .It Fl u Ar file
-Updates the XLIFF
+Update the XLIFF
 .Ar file
-with new translatable strings in the input files.
+with new translatable strings in the HTML5 input files.
 This merges existing and new terms both ways: if a new word is found in
 the inputs, it is added; existing words in the XLIFF file are retained.
 .It Ar
-XML input files to be translated or mined for translatable information.
+HTML5 input files to be translated or mined for translatable information.
 .El
 .Pp
-Each text node in the input files, which must be HTML5, is its own
-translatable string.
+Each text node in the HTML5 input files is its own translatable string,
+unless the text node is in a phrasing content element.
 For example,
 .Bd -literal
 <section>
@@ -71,9 +71,17 @@ For example,
 </section>
 .Ed
 .Pp
-results in four translatable strings: foo, bar, baz, and foobar.
+results in two translatable strings:
+.Qq foo <i>bar</i> baz
+and
+.Qq foobar .
+.Pp
 Leading and trailing white-space for the translatable key is stripped,
-which is why the text node following <section> is ignored.
+with contiguous white-space collapsing into a single space, and empty
+keys ignored.
+This is why the text node preceding the
+.Li div
+is ignored.
 You may override this behaviour with the
 .Li xml:space="preserve"
 attribute, which affects the current and descendent nodes.
@@ -85,17 +93,12 @@ attribute, which is set to either
 or
 .Li no .
 When set to
-.Li no
-.Pq the default ,
-all nodes at and under the labelled node are not examined for
-translatable content.
+.Li no ,
+descendents of the labelled node are not examined for translatable
+content.
 When set to
 .Li yes ,
 the opposite is true.
-Thus, to white-list translations, set
-.Li its:translate="no"
-on the root node and mark each translatable node with
-.Li its:translate="yes" .
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
@@ -105,8 +108,8 @@ be used as a template for translating into different languages.
 .Bd -literal
 <!DOCTYPE html>
 <html>
-    <head><title its:translate="yes"></title></head>
-    <body its:translate="yes"><p>message</p></body>
+    <head><title>title</title></head>
+    <body><p>message</p></body>
 </html>
 .Ed
 .Pp
@@ -120,10 +123,14 @@ Now edit the XLIFF file.
  version="2.0" srcLang="TODO" trgLang="TODO">
     <file id="file1">
         <unit id="unit1">
-        <segment>
-            <source>message</source>
-            <target>Hello, World!</target>
-        </segment>
+          <segment>
+              <source>title</source>
+              <target>Title</target>
+          </segment>
+          <segment>
+              <source>message</source>
+              <target>Hello, World!</target>
+          </segment>
         </unit>
     </file>
 </xliff>
@@ -147,16 +154,3 @@ The
 utility was written by
 .An Kristaps Dzonsons ,
 .Mt kristaps@bsd.lv .
-.Sh CAVEATS
-In
-.Nm ,
-a <target> directive may have nested elements.
-For example,
-.Bd -literal
-    <segment>
-        <source>message</source>
-        <target><q>Hello, World!</q></target>
-    </segment>
-.Ed
-has the full contents of the target extracted.
-The RFC is silent as to whether this is proper behaviour.
