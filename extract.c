@@ -314,6 +314,7 @@ store(struct hparse *p)
  * Look up the word in our translation table.
  * If it exists, then emit it.
  * If it doesn't, then emit what already exists on the page.
+ * If it's just white-space, then emit the white-space.
  */
 static void
 translate(struct hparse *hp)
@@ -323,13 +324,16 @@ translate(struct hparse *hp)
 
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
-
+	
 	cp = dotext(hp->ident, hp->identsz, 
 		hp->stack[hp->stacksz - 1].preserve);
 	hp->identsz = 0;
 
-	if (NULL == cp)
+	if (NULL == cp) {
+		if (NULL != hp->ident)
+			printf("%s", hp->ident);
 		return;
+	}
 
 	for (i = 0; i < hp->xliffsz; i++)
 		if (0 == strcmp(hp->xliffs[i].source, cp)) {
