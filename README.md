@@ -1,9 +1,10 @@
 ## Synopsis
 
-sintl is a tool for translating HTML5 web pages.  It works like
-[itstool](http://itstool.org/), being different in implementation
-details that work better with a UNIX workflow of Makefiles and such.
-See the [sintl](https://kristaps.bsd.lv/sintl) web-site for stable
+*sintl* is a tool for translating HTML5 web pages.  It's designed with
+simplicity in mind; so for more complex needs, you may want to stick
+with [itstool](http://itstool.org/) or other tools.
+
+See the [sintl](https://kristaps.bsd.lv/sintl) website for stable
 releases and documentation.
 
 This is a read-only copy of the internal CVS repository and is kept
@@ -15,7 +16,7 @@ GitHub facilities to submit patches.
 
 Download the latest version's 
 [source archive](https://kristaps.bsd.lv/sintl/snapshots/sintl.tar.gz) 
-(or download the project from GitHub), 
+(or download the project from GitHub), run `./configure`,
 compile with `make`, then `sudo make install` (or `doas make install`,
 whatever the case may be).
 
