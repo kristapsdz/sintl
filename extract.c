@@ -517,7 +517,7 @@ htext(void *dat, const XML_Char *s, int len)
 	struct hparse	*p = dat;
 	
 	if (0 == p->stacksz || 
-		0 == p->stack[p->stacksz - 1].translate) {
+	    0 == p->stack[p->stacksz - 1].translate) {
 		if (POP_JOIN == p->op)
 			printf("%.*s", len, s);
 		return;
@@ -614,7 +614,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	/* Default for whole document. */
 
 	if (0 == p->stacksz && 0 == dotrans)
-		dotrans = -1;
+		dotrans = 1;
 	if (0 == p->stacksz && 0 == preserve)
 		preserve = -1;
 
