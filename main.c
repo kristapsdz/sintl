@@ -73,20 +73,12 @@ int
 main(int argc, char *argv[])
 {
 	int		 ch, rc;
-	const char	*pname, *xliff;
-	enum op	 	 op;
+	const char	*xliff = NULL;
+	enum op	 	 op = OP_EXTRACT;
 	XML_Parser	 p;
 
 	sandbox();
 
-	pname = strrchr(argv[0], '/');
-	if (pname == NULL)
-		pname = argv[0];
-	else
-		++pname;
-
-	xliff = NULL;
-	op = OP_EXTRACT;
 	while (-1 != (ch = getopt(argc, argv, "ej:u:")))
 		switch (ch) {
 		case ('e'):
@@ -133,6 +125,7 @@ main(int argc, char *argv[])
 	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
 
 usage:
-	fprintf(stderr, "usage: %s [-j file] file...\n", pname);
+	fprintf(stderr, "usage: %s [-e] "
+		"[-j xliff] [-u xliff] html5...\n", getprogname());
 	return(EXIT_FAILURE);
 }
