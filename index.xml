@@ -10,9 +10,8 @@
 	</head>
 	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication" its:translate="no">
 		<header>
-			<div><i class="fa fa-language fa-2x"></i><span its:translate="yes">multi-language content</span></div>
-			<div><i class="fa fa-gears fa-2x"></i><a href="sintl.1.html">sintl(1)</a></div>
-			<div><i class="fa fa-html5 fa-2x"></i><span its:translate="yes">translated HTML5</span></div>
+			<div><i class="fa fa-fw fa-gears fa-2x"></i> sintl(1)</div>
+			<div><i class="fa fa-fw fa-html5 fa-2x"></i> <span its:translate="yes">simple HTML5 translation</span></div>
 		</header>
 		<article>
 			<p>
