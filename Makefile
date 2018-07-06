@@ -3,9 +3,11 @@ include Makefile.configure
 VERSION 	 = 0.1.2
 OBJS		 = compats.o \
 		   extract.o \
+		   fragment.o \
 		   main.o \
 		   results.o 
 SRCS		 = extract.c \
+		   fragment.c \
 		   main.c \
 		   results.c
 XMLS		 = index.xml

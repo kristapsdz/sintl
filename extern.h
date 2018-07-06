@@ -1,6 +1,6 @@
 /*	$Id$ */
 /*
- * Copyright (c) 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014, 2018 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,6 +42,24 @@ struct	xliff {
 	char		 *target; /* value */
 };
 
+enum	fragtype {
+	FRAG_ROOT,
+	FRAG_TEXT,
+	FRAG_NODE
+};
+
+struct	frag {
+	char		 *val;
+	size_t		  valsz;
+	int		  node_closed;
+	char		**atts;
+	enum fragtype	  type;
+	struct frag	**child;
+	size_t		  childsz;
+	struct frag	 *next;
+	struct frag	 *parent;
+};
+
 /*
  * Parse tracker for a document that's either going to be translated or
  * scanned for translatable parts.
@@ -59,6 +77,8 @@ struct	hparse {
 	char	 	 *ident; /* currently-scanning word */
 	size_t		  identsz; /* length of current word */
 	size_t		  identmax; /* maximum word buffer */
+	struct frag	 *frag_current;
+	struct frag	 *frag_root;
 	struct stack	  stack[64]; /* stack of contexts */
 	size_t		  stacksz; /* stack size */
 	struct xliff	 *xliffs; /* translation parts */
@@ -92,12 +112,21 @@ struct	xparse {
 
 __BEGIN_DECLS
 
-int	extract(XML_Parser, int, char *[]);
-int	join(const char *, XML_Parser, int, char *[]);
-int	update(const char *, XML_Parser, int, char *[]);
+int	 extract(XML_Parser, int, char *[]);
+int	 join(const char *, XML_Parser, int, char *[]);
+int	 update(const char *, XML_Parser, int, char *[]);
 
-void	results_extract(struct hparse *);
-void	results_update(struct hparse *);
+void 	 frag_node_free(struct frag *);
+void	 frag_node_start(struct frag **, struct frag **, 
+	 	const XML_Char *, const XML_Char **);
+void	 frag_node_text(struct frag **, struct frag **, 
+	 	const XML_Char *, int);
+void	 frag_node_end(struct frag **, const XML_Char *);
+void	 frag_node_print(const struct frag *, size_t);
+char	*frag_serialise(const struct frag *, int);
+
+void	 results_extract(struct hparse *);
+void	 results_update(struct hparse *);
 
 __END_DECLS
 

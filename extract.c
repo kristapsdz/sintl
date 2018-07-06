@@ -286,10 +286,24 @@ dotext(const char *buf, size_t sz, int preserve)
 static void
 store(struct hparse *p)
 {
-	char	*cp;
+	char	*cp = NULL;
 
 	assert(POP_EXTRACT == p->op);
 	assert(p->identsz > 0);
+
+	if (NULL != p->frag_root) {
+		cp = frag_serialise(p->frag_root, 
+			p->stack[p->stacksz - 1].preserve);
+		if (NULL != cp) {
+			puts("<root>");
+			frag_node_print(p->frag_root, 0);
+			puts("</root>");
+			printf("<output>%s</output>\n", cp);
+			free(cp);
+		}
+		frag_node_free(p->frag_root);
+		p->frag_root = p->frag_current = NULL;
+	}
 
 	/* Expand word list, if necessary. */
 
@@ -342,7 +356,7 @@ translate(struct hparse *hp)
 			return;
 		}
 
-	lerr(hp->fname, hp->p, "No translation found");
+	lerr(hp->fname, hp->p, "no translation found");
 	printf("%s", hp->ident);
 	free(cp);
 }
@@ -485,7 +499,7 @@ xend(void *dat, const XML_Char *s)
 
 	if (0 == strcmp(s, "segment")) {
 		if (NULL == p->source || NULL == p->target) {
-			lerr(p->fname, p->p, "No source or target");
+			lerr(p->fname, p->p, "no <source> or <target>");
 			free(p->source);
 			free(p->target);
 			p->source = p->target = NULL;
@@ -527,6 +541,8 @@ htext(void *dat, const XML_Char *s, int len)
 		return;
 	}
 
+	frag_node_text(&p->frag_root, &p->frag_current, s, len);
+
 	if (p->identsz + len + 1 > p->identmax) {
 		p->identmax = p->identsz + len + 1;
 		p->ident = realloc(p->ident, p->identmax);
@@ -550,6 +566,14 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	int		  dotrans = 0, preserve = 0, phrase = 0;
 	const char	**elems;
 
+	if (0 == strcasecmp(s, "html")) {
+		for (attp = atts; NULL != *attp; attp += 2) 
+			if (0 == strcasecmp(attp[0], "xmlns:its"))
+				break;
+		if (NULL == *attp)
+			lerr(p->fname, p->p, "missing xmlns:its");
+	}
+
 	/*
 	 * If we're already in a translating context and we have one of
 	 * the protected phrase elements, then append the element to our
@@ -564,6 +588,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			}
 
 	if (phrase) {
+		frag_node_start(&p->frag_root, &p->frag_current, s, atts);
 		happend(p, "<", 1);
 		happend(p, s, strlen(s));
 		for (attp = atts; NULL != *attp; attp += 2) {
@@ -694,6 +719,7 @@ hend(void *dat, const XML_Char *s)
 	 */
 
 	if (0 == end && phrase) {
+		frag_node_end(&p->frag_current, s);
 		happend(p, "</", 2);
 		happend(p, s, strlen(s));
 		happend(p, ">", 1);
