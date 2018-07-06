@@ -65,7 +65,8 @@ frag_node_print(const struct frag *f, size_t tabs)
 void
 frag_node_free(struct frag *f)
 {
-	size_t	 i;
+	size_t	  i;
+	char	**atts;
 
 	if (NULL == f)
 		return;
@@ -73,6 +74,14 @@ frag_node_free(struct frag *f)
 	for (i = 0; i < f->childsz; i++)
 		frag_node_free(f->child[i]);
 
+	if (NULL != f->atts)
+		for (atts = f->atts; NULL != *atts; atts += 2) {
+			free(atts[0]);
+			free(atts[1]);
+		}
+
+	free(f->atts);
+	free(f->child);
 	free(f->val);
 	free(f);
 }

@@ -201,8 +201,9 @@ hparse_free(struct hparse *hp)
 
 	for (i = 0; i < hp->wordsz; i++)
 		free(hp->words[i]);
-	free(hp->words);
+
 	frag_node_free(hp->frag_root);
+	free(hp->words);
 	free(hp);
 }
 
