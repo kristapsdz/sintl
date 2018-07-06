@@ -43,21 +43,26 @@ struct	xliff {
 };
 
 enum	fragtype {
-	FRAG_ROOT,
-	FRAG_TEXT,
-	FRAG_NODE
+	FRAG_ROOT, /* root of fragment tree */
+	FRAG_TEXT, /* text node */
+	FRAG_NODE /* element node */
 };
 
+/*
+ * Tree to be extracted or translated (origin HTML5), tree of content
+ * identifying a translation (XLIFF), or tree of a translation itself
+ * (XLIFF).
+ */
 struct	frag {
-	char		 *val;
-	size_t		  valsz;
-	int		  node_closed;
-	char		**atts;
-	enum fragtype	  type;
-	struct frag	**child;
-	size_t		  childsz;
-	struct frag	 *next;
-	struct frag	 *parent;
+	char		 *val; /* element name or text data */
+	size_t		  valsz; /* string length of valsz */
+	int		  node_closed; /* if node, whether closed */
+	char		**atts; /* if node, attributes */
+	enum fragtype	  type; /* type of node */
+	struct frag	**child; /* array of child nodes */
+	size_t		  childsz; /* number of child nodes */
+	struct frag	 *next; /* next node */
+	struct frag	 *parent; /* parent (NULL if root) */
 };
 
 /*
@@ -74,11 +79,8 @@ struct	hparse {
 	char		**words; /* if scanning, scanned words */
 	size_t		  wordsz; /* number of words */
 	size_t		  wordmax; /* word buffer size */
-	char	 	 *ident; /* currently-scanning word */
-	size_t		  identsz; /* length of current word */
-	size_t		  identmax; /* maximum word buffer */
-	struct frag	 *frag_current;
-	struct frag	 *frag_root;
+	struct frag	 *frag_current; /* current fragment position */
+	struct frag	 *frag_root; /* if parsing, fragment root */
 	struct stack	  stack[64]; /* stack of contexts */
 	size_t		  stacksz; /* stack size */
 	struct xliff	 *xliffs; /* translation parts */

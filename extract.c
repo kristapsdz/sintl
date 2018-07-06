@@ -172,7 +172,8 @@ static void
 hparse_reset(struct hparse *hp)
 {
 
-	hp->identsz = 0;
+	frag_node_free(hp->frag_root);
+	hp->frag_root = hp->frag_current = NULL;
 	while (hp->stacksz > 0)
 		free(hp->stack[--hp->stacksz].name);
 }
@@ -201,7 +202,7 @@ hparse_free(struct hparse *hp)
 	for (i = 0; i < hp->wordsz; i++)
 		free(hp->words[i]);
 	free(hp->words);
-	free(hp->ident);
+	frag_node_free(hp->frag_root);
 	free(hp);
 }
 
@@ -289,21 +290,16 @@ store(struct hparse *p)
 	char	*cp = NULL;
 
 	assert(POP_EXTRACT == p->op);
-	assert(p->identsz > 0);
+	assert(NULL != p->frag_root);
 
-	if (NULL != p->frag_root) {
-		cp = frag_serialise(p->frag_root, 
-			p->stack[p->stacksz - 1].preserve);
-		if (NULL != cp) {
-			puts("<root>");
-			frag_node_print(p->frag_root, 0);
-			puts("</root>");
-			printf("<output>%s</output>\n", cp);
-			free(cp);
-		}
-		frag_node_free(p->frag_root);
-		p->frag_root = p->frag_current = NULL;
-	}
+	cp = frag_serialise(p->frag_root, 
+		p->stack[p->stacksz - 1].preserve);
+
+	frag_node_free(p->frag_root);
+	p->frag_root = p->frag_current = NULL;
+
+	if (NULL == cp)
+		return;
 
 	/* Expand word list, if necessary. */
 
@@ -315,12 +311,7 @@ store(struct hparse *p)
 			err(EXIT_FAILURE, NULL);
 	}
 
-	cp = dotext(p->ident, p->identsz,
-		p->stack[p->stacksz - 1].preserve);
-	p->identsz = 0;
-
-	if (NULL != cp)
-		p->words[p->wordsz++] = cp;
+	p->words[p->wordsz++] = cp;
 }
 
 /*
@@ -338,14 +329,18 @@ translate(struct hparse *hp)
 
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
-	
-	cp = dotext(hp->ident, hp->identsz, 
-		hp->stack[hp->stacksz - 1].preserve);
-	hp->identsz = 0;
 
+	cp = frag_serialise(hp->frag_root, 
+		hp->stack[hp->stacksz - 1].preserve);
+
+	frag_node_free(hp->frag_root);
+	hp->frag_root = hp->frag_current = NULL;
+	
 	if (NULL == cp) {
-		if (NULL != hp->ident)
-			printf("%s", hp->ident);
+		cp = frag_serialise(hp->frag_root, 1);
+		if (NULL != cp)
+			printf("%s", cp);
+		free(cp);
 		return;
 	}
 
@@ -357,7 +352,7 @@ translate(struct hparse *hp)
 		}
 
 	lerr(hp->fname, hp->p, "no translation found");
-	printf("%s", hp->ident);
+	printf("%s", cp);
 	free(cp);
 }
 
@@ -378,13 +373,6 @@ append(char **buf, size_t *sz, size_t *max, const XML_Char *s, int len)
 
 static void
 xappend(struct xparse *p, const XML_Char *s, int len)
-{
-
-	append(&p->ident, &p->identsz, &p->identmax, s, len);
-}
-
-static void
-happend(struct hparse *p, const XML_Char *s, int len)
 {
 
 	append(&p->ident, &p->identsz, &p->identmax, s, len);
@@ -542,21 +530,10 @@ htext(void *dat, const XML_Char *s, int len)
 	}
 
 	frag_node_text(&p->frag_root, &p->frag_current, s, len);
-
-	if (p->identsz + len + 1 > p->identmax) {
-		p->identmax = p->identsz + len + 1;
-		p->ident = realloc(p->ident, p->identmax);
-		if (NULL == p->ident)
-			err(EXIT_FAILURE, NULL);
-	}
-
-	memcpy(p->ident + p->identsz, s, len);
-	p->identsz += len;
-	p->ident[p->identsz] = '\0';
 }
 
 /*
- * Start an element in aa document we're translating or extracting.
+ * Start an element in a document we're translating or extracting.
  */
 static void
 hstart(void *dat, const XML_Char *s, const XML_Char **atts)
@@ -565,6 +542,8 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	const XML_Char	**attp;
 	int		  dotrans = 0, preserve = 0, phrase = 0;
 	const char	**elems;
+
+	/* Warn if we don't have the correct XML namespace. */
 
 	if (0 == strcasecmp(s, "html")) {
 		for (attp = atts; NULL != *attp; attp += 2) 
@@ -588,17 +567,8 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			}
 
 	if (phrase) {
-		frag_node_start(&p->frag_root, &p->frag_current, s, atts);
-		happend(p, "<", 1);
-		happend(p, s, strlen(s));
-		for (attp = atts; NULL != *attp; attp += 2) {
-			happend(p, " ", 1);
-			happend(p, attp[0], strlen(attp[0]));
-			happend(p, "=\"", 2);
-			happend(p, attp[1], strlen(attp[1]));
-			happend(p, "\"", 1);
-		}
-		happend(p, ">", 1);
+		frag_node_start(&p->frag_root, 
+			&p->frag_current, s, atts);
 		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
 		return;
@@ -606,9 +576,9 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 
 	/* Store/translate any existing keywords. */
 
-	if (p->identsz > 0 && POP_JOIN == p->op)
+	if (NULL != p->frag_root && POP_JOIN == p->op)
 		translate(p);
-	else if (p->identsz > 0)
+	else if (NULL != p->frag_root)
 		store(p);
 
 	/*
@@ -720,9 +690,6 @@ hend(void *dat, const XML_Char *s)
 
 	if (0 == end && phrase) {
 		frag_node_end(&p->frag_current, s);
-		happend(p, "</", 2);
-		happend(p, s, strlen(s));
-		happend(p, ">", 1);
 		return;
 	}
 
@@ -732,9 +699,9 @@ hend(void *dat, const XML_Char *s)
 	 * First, flush any existing translatable content.
 	 */
 
-	if (p->identsz > 0 && POP_JOIN == p->op)
+	if (NULL != p->frag_root && POP_JOIN == p->op)
 		translate(p);
-	else if (p->identsz > 0)
+	else if (NULL != p->frag_root)
 		store(p);
 
 	/* Echo if we're translating unless we've already closed. */
