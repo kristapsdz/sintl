@@ -291,16 +291,18 @@ translate(struct hparse *hp)
 	cp = frag_serialise(hp->frag_root, 
 		hp->stack[hp->stacksz - 1].preserve);
 
-	frag_node_free(hp->frag_root);
-	hp->frag_root = hp->frag_current = NULL;
-	
 	if (NULL == cp) {
 		cp = frag_serialise(hp->frag_root, 1);
 		if (NULL != cp)
 			printf("%s", cp);
 		free(cp);
+		frag_node_free(hp->frag_root);
+		hp->frag_root = hp->frag_current = NULL;
 		return;
 	}
+
+	frag_node_free(hp->frag_root);
+	hp->frag_root = hp->frag_current = NULL;
 
 	for (i = 0; i < hp->xliffsz; i++)
 		if (0 == strcmp(hp->xliffs[i].source, cp)) {

@@ -260,7 +260,8 @@ frag_serialise(const struct frag *f, int preserve)
 	if (0 == sz) {
 		free(buf);
 		return NULL;
-	}
+	} else if (preserve)
+		return buf;
 
 	for (i = 0; i < sz; i++)
 		if ( ! isspace((unsigned char)buf[i]))
