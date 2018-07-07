@@ -28,6 +28,8 @@
 
 #include "extern.h"
 
+/* #define DEBUG 1 */
+
 void
 frag_node_free(struct frag *f)
 {
@@ -36,6 +38,10 @@ frag_node_free(struct frag *f)
 
 	if (NULL == f)
 		return;
+
+#ifdef DEBUG
+	warnx("%s", __func__);
+#endif
 
 	for (i = 0; i < f->childsz; i++)
 		frag_node_free(f->child[i]);
@@ -64,8 +70,11 @@ frag_node_start(struct frag **root, struct frag **cur,
 	struct frag	 *f;
 	size_t		  i = 0;
 	const XML_Char	**attp;
-	
+
 	if (NULL == *root) {
+#ifdef DEBUG
+	warnx("%s: (new root)", __func__);
+#endif
 		assert(NULL == *cur);
 		*root = calloc(1, sizeof(struct frag));
 		if (NULL == *root)
@@ -73,6 +82,10 @@ frag_node_start(struct frag **root, struct frag **cur,
 		(*root)->type = FRAG_ROOT;
 		*cur = *root;
 	}
+
+#ifdef DEBUG
+	warnx("%s: %s", __func__, s);
+#endif
 
 	assert(NULL != *cur);
 	assert(NULL != *root);
@@ -120,6 +133,9 @@ frag_node_text(struct frag **root, struct frag **cur,
 	struct frag	*f;
 
 	if (NULL == *root) {
+#ifdef DEBUG
+	warnx("%s: (new root)", __func__);
+#endif
 		assert(NULL == *cur);
 		*root = calloc(1, sizeof(struct frag));
 		if (NULL == *root)
@@ -127,6 +143,10 @@ frag_node_text(struct frag **root, struct frag **cur,
 		(*root)->type = FRAG_ROOT;
 		*cur = *root;
 	}
+
+#ifdef DEBUG
+	warnx("%s: (text)", __func__);
+#endif
 
 	assert(NULL != *root);
 	assert(NULL != *cur);
@@ -162,6 +182,10 @@ void
 frag_node_end(struct frag **cur, const XML_Char *s)
 {
 
+#ifdef DEBUG
+	warnx("%s: %s", __func__, s);
+#endif
+
 	assert(NULL != *cur);
 	assert(FRAG_NODE == (*cur)->type);
 	assert(0 == strcmp(s, (*cur)->val));
@@ -170,13 +194,11 @@ frag_node_end(struct frag **cur, const XML_Char *s)
 }
 
 static void
-append(char **buf, size_t *sz, size_t *max, const XML_Char *s, int len)
+append(char **buf, size_t *sz, size_t *max, const XML_Char *s, size_t len)
 {
 
-	if (NULL == s)
+	if (NULL == s || 0 == len)
 		return;
-
-	assert(len);
 
 	if (*sz + len + 1 > *max) {
 		*max = *sz + len + 1;
