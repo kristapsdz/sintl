@@ -242,7 +242,7 @@ xparse_free(struct xparse *xp)
  * eventually be putting into a template XLIFF file.
  * Do so, being sensitive to the current space-preservation state.
  */
-static void
+static int
 store(struct hparse *p)
 {
 	char	*cp = NULL;
@@ -250,14 +250,20 @@ store(struct hparse *p)
 	assert(POP_EXTRACT == p->op);
 	assert(NULL != p->frag_root);
 
+	if (p->frag_root != p->frag_current) {
+		lerr(p->fname, p->p, 
+			"translation scope broken");
+		XML_StopParser(p->p, 0);
+		return 0;
+	}
+
 	cp = frag_serialise(p->frag_root, 
 		p->stack[p->stacksz - 1].preserve);
-
 	frag_node_free(p->frag_root);
 	p->frag_root = p->frag_current = NULL;
 
 	if (NULL == cp)
-		return;
+		return 1;
 
 	/* Expand word list, if necessary. */
 
@@ -270,6 +276,7 @@ store(struct hparse *p)
 	}
 
 	p->words[p->wordsz++] = cp;
+	return 1;
 }
 
 /*
@@ -279,7 +286,7 @@ store(struct hparse *p)
  * If it doesn't, then emit what already exists on the page.
  * If it's just white-space, then emit the white-space.
  */
-static void
+static int
 translate(struct hparse *hp)
 {
 	char	*cp;
@@ -287,6 +294,13 @@ translate(struct hparse *hp)
 
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
+
+	if (hp->frag_root != hp->frag_current) {
+		lerr(hp->fname, hp->p, 
+			"translation scope broken");
+		XML_StopParser(hp->p, 0);
+		return 0;
+	}
 
 	cp = frag_serialise(hp->frag_root, 
 		hp->stack[hp->stacksz - 1].preserve);
@@ -298,7 +312,7 @@ translate(struct hparse *hp)
 		free(cp);
 		frag_node_free(hp->frag_root);
 		hp->frag_root = hp->frag_current = NULL;
-		return;
+		return 1;
 	}
 
 	frag_node_free(hp->frag_root);
@@ -308,12 +322,13 @@ translate(struct hparse *hp)
 		if (0 == strcmp(hp->xliffs[i].source, cp)) {
 			printf("%s", hp->xliffs[i].target);
 			free(cp);
-			return;
+			return 1;
 		}
 
 	lerr(hp->fname, hp->p, "no translation found");
 	printf("%s", cp);
 	free(cp);
+	return 1;
 }
 
 static void
@@ -452,7 +467,8 @@ htext(void *dat, const XML_Char *s, int len)
 		return;
 	}
 
-	frag_node_text(&p->frag_root, &p->frag_current, s, len);
+	frag_node_text(&p->frag_root, 
+		&p->frag_current, s, len);
 }
 
 /*
@@ -499,10 +515,13 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 
 	/* Store/translate any existing keywords. */
 
-	if (NULL != p->frag_root && POP_JOIN == p->op)
-		translate(p);
-	else if (NULL != p->frag_root)
-		store(p);
+	if (NULL != p->frag_root && POP_JOIN == p->op) {
+		if ( ! translate(p))
+			return;
+	} else if (NULL != p->frag_root) {
+		if ( ! store(p))
+			return;
+	}
 
 	/*
 	 * If we're translating, then echo the tags.
@@ -624,10 +643,13 @@ hend(void *dat, const XML_Char *s)
 	 * First, flush any existing translatable content.
 	 */
 
-	if (NULL != p->frag_root && POP_JOIN == p->op)
-		translate(p);
-	else if (NULL != p->frag_root)
-		store(p);
+	if (NULL != p->frag_root && POP_JOIN == p->op) {
+		if ( ! translate(p))
+			return;
+	} else if (NULL != p->frag_root) {
+		if ( ! store(p))
+			return;
+	}
 
 	/* Echo if we're translating unless we've already closed. */
 
