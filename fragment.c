@@ -64,7 +64,7 @@ frag_node_start(struct frag **root, struct frag **cur,
 	struct frag	 *f;
 	size_t		  i = 0;
 	const XML_Char	**attp;
-
+	
 	if (NULL == *root) {
 		assert(NULL == *cur);
 		*root = calloc(1, sizeof(struct frag));
@@ -76,11 +76,6 @@ frag_node_start(struct frag **root, struct frag **cur,
 
 	assert(NULL != *cur);
 	assert(NULL != *root);
-
-	if (FRAG_TEXT == (*cur)->type)
-		*cur = (*cur)->parent;
-
-	assert(NULL != *cur);
 
 	for (attp = atts; NULL != *attp; attp += 2, i += 2) 
 		continue;
@@ -136,7 +131,10 @@ frag_node_text(struct frag **root, struct frag **cur,
 	assert(NULL != *root);
 	assert(NULL != *cur);
 
-	if (FRAG_TEXT != (*cur)->type) {
+	f = (*cur)->childsz ? 
+		(*cur)->child[(*cur)->childsz - 1] : NULL;
+
+	if (NULL == f || FRAG_TEXT != f->type) {
 		f = calloc(1, sizeof(struct frag));
 		if (NULL == f)
 			err(EXIT_FAILURE, NULL);
@@ -151,24 +149,18 @@ frag_node_text(struct frag **root, struct frag **cur,
 		if ((*cur)->childsz)
 			(*cur)->child[(*cur)->childsz - 1]->next = f;
 		(*cur)->childsz++;
-		*cur = f;
 	}
 
-	(*cur)->val = realloc((*cur)->val, (*cur)->valsz + len);
-	if (NULL == (*cur)->val)
+	f->val = realloc(f->val, f->valsz + len);
+	if (NULL == f->val)
 		err(EXIT_FAILURE, NULL);
-	memcpy((*cur)->val + (*cur)->valsz, s, len);
-	(*cur)->valsz += len;
+	memcpy(f->val + f->valsz, s, len);
+	f->valsz += len;
 }
 
 void
 frag_node_end(struct frag **cur, const XML_Char *s)
 {
-
-	assert(NULL != *cur);
-
-	if (FRAG_TEXT == (*cur)->type)
-		*cur = (*cur)->parent;
 
 	assert(NULL != *cur);
 	assert(FRAG_NODE == (*cur)->type);

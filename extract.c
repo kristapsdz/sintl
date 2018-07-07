@@ -611,6 +611,8 @@ hend(void *dat, const XML_Char *s)
 
 	if (0 == end && phrase) {
 		frag_node_end(&p->frag_current, s);
+		if (0 == strcmp(p->stack[p->stacksz - 1].name, s))
+			p->stack[p->stacksz - 1].nested--;
 		return;
 	}
 
