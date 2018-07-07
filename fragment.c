@@ -247,8 +247,7 @@ frag_serialise_r(const struct frag *f,
 	for (i = 0; i < f->childsz; i++)
 		frag_serialise_r(f->child[i], buf, sz, max, preserve);
 
-	if (FRAG_NODE == f->type) {
-		assert(f->node_closed);
+	if (FRAG_NODE == f->type && f->node_closed) {
 		append(buf, sz, max, "</", 2);
 		append(buf, sz, max, f->val, f->valsz);
 		append(buf, sz, max, ">", 1);
