@@ -215,12 +215,18 @@ static void
 append(char **buf, size_t *sz, size_t *max, const XML_Char *s, int len)
 {
 
+	if (NULL == s)
+		return;
+
+	assert(len);
+
 	if (*sz + len + 1 > *max) {
 		*max = *sz + len + 1;
 		if (NULL == (*buf = realloc(*buf, *max)))
 			err(EXIT_FAILURE, NULL);
 	}
 
+	assert(NULL != *buf);
 	memcpy(*buf + *sz, s, len);
 	*sz += len;
 	(*buf)[*sz] = '\0';
@@ -288,6 +294,9 @@ frag_serialise(const struct frag *f, int preserve)
 {
 	size_t	 i, sz = 0, max = 0;
 	char	*buf = NULL;
+
+	if (NULL == f)
+		return NULL;
 
 	frag_serialise_r(f, &buf, &sz, &max, preserve);
 

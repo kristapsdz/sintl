@@ -103,9 +103,8 @@ struct	xparse {
 	struct xliff	 *xliffs; /* current xliffs */
 	size_t		  xliffsz; /* current size of xliffs */
 	size_t		  xliffmax; /* xliff buffer size */
-	char		 *ident; /* currently-scanning word */
-	size_t		  identsz; /* length of current word */
-	size_t		  identmax; /* maximum word buffer */
+	struct frag	 *frag_current; /* current fragment position */
+	struct frag	 *frag_root; /* if parsing, fragment root */
 	char		 *source; /* current source in segment */
 	char		 *target; /* current target in segment */
 	size_t		  nest; /* nesting in extraction */

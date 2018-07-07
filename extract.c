@@ -225,59 +225,16 @@ xparse_free(struct xparse *xp)
 {
 	size_t	 i;
 
-	free(xp->target);
-	free(xp->source);
 	for (i = 0; i < xp->xliffsz; i++) {
 		free(xp->xliffs[i].source);
 		free(xp->xliffs[i].target);
 	}
+
+	frag_node_free(xp->frag_root);
+	free(xp->target);
+	free(xp->source);
 	free(xp->xliffs);
-	free(xp->ident);
 	free(xp);
-}
-
-/*
- * Normalise text segment.
- * If we're in "preserve" (non-zero) mode, then this is strdup.
- * If we're not, then we replace all white-space with spaces, and
- * collapse all contiguous white-space into a single space.
- * Returns NULL if there's no text to return (i.e., empty).
- */
-static char *
-dotext(const char *buf, size_t sz, int preserve)
-{
-	size_t	 i, j;
-	char	*ret;
-
-	if (preserve) {
-		if (0 == sz)
-			return NULL;
-		if (NULL == (ret = strdup(buf)))
-			err(EXIT_FAILURE, NULL);
-		return ret;
-	}
-
-	for (i = 0; i < sz; i++)
-		if ( ! isspace((unsigned char)buf[i]))
-			break;
-	
-	if (i == sz) 
-		return NULL;
-
-	if (NULL == (ret = malloc(sz + 1)))
-		err(EXIT_FAILURE, NULL);
-
-	for (i = j = 0; i < sz; j++) {
-		ret[j] = buf[i];
-		if ( ! isspace((unsigned char)buf[i++]))
-			continue;
-		ret[j] = ' ';
-		while (i < sz && isspace((unsigned char)buf[i]))
-			i++;
-	}
-
-	ret[j] = '\0';
-	return ret;
 }
 
 /*
@@ -358,59 +315,24 @@ translate(struct hparse *hp)
 }
 
 static void
-append(char **buf, size_t *sz, size_t *max, const XML_Char *s, int len)
-{
-
-	if (*sz + len + 1 > *max) {
-		*max = *sz + len + 1;
-		if (NULL == (*buf = realloc(*buf, *max)))
-			err(EXIT_FAILURE, NULL);
-	}
-
-	memcpy(*buf + *sz, s, len);
-	*sz += len;
-	(*buf)[*sz] = '\0';
-}
-
-static void
-xappend(struct xparse *p, const XML_Char *s, int len)
-{
-
-	append(&p->ident, &p->identsz, &p->identmax, s, len);
-}
-
-/*
- * Append an XLIFF word fragment into the nil-terminated ident buffer
- * for later processing.
- */
-static void
 xtext(void *dat, const XML_Char *s, int len)
 {
+	struct xparse	*p = dat;
 
-	xappend(dat, s, len);
+	frag_node_text(&p->frag_root, 
+		&p->frag_current, s, len);
 }
 
 static void
 xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct xparse	 *p = dat;
-	const XML_Char	**attp;
 
 	/* FIXME */
 	if (0 == strcmp(s, "target"))
 		++p->nest;
 
-	xappend(dat, "<", 1);
-	xappend(dat, s, strlen(s));
-	for (attp = atts; NULL != *attp; attp += 2) {
-		xappend(dat, " ", 1);
-		xappend(dat, attp[0], strlen(attp[0]));
-		xappend(dat, "=\"", 2);
-		xappend(dat, attp[1], strlen(attp[1]));
-		xappend(dat, "\"", 1);
-	}
-	xappend(dat, ">", 1);
-
+	frag_node_start(&p->frag_root, &p->frag_current, s, atts);
 }
 
 static void
@@ -422,9 +344,7 @@ xnestend(void *dat, const XML_Char *s)
 	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
 
 	if (strcmp(s, rtype) || --p->nest > 0) {
-		xappend(dat, "</", 2);
-		xappend(dat, s, strlen(s));
-		xappend(dat, ">", 1);
+		frag_node_end(&p->frag_current, s);
 		return;
 	}
 
@@ -433,16 +353,16 @@ xnestend(void *dat, const XML_Char *s)
 
 	if (NEST_TARGET == p->nesttype) {
 		free(p->target);
-		p->target = NULL;
-		p->target = dotext(p->ident, p->identsz, 0);
-		p->identsz = 0;
+		p->target = frag_serialise(p->frag_root, 0);
+		frag_node_free(p->frag_root);
+		p->frag_root = p->frag_current = NULL;
 		if (NULL == p->target)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
-		p->source = NULL;
-		p->source = dotext(p->ident, p->identsz, 0);
-		p->identsz = 0;
+		p->source = frag_serialise(p->frag_root, 0);
+		frag_node_free(p->frag_root);
+		p->frag_root = p->frag_current = NULL;
 		if (NULL == p->source)
 			lerr(p->fname, p->p, "empty <source>");
 	}
