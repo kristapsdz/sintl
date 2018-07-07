@@ -123,7 +123,6 @@ void	 frag_node_start(struct frag **, struct frag **,
 void	 frag_node_text(struct frag **, struct frag **, 
 	 	const XML_Char *, int);
 void	 frag_node_end(struct frag **, const XML_Char *);
-void	 frag_node_print(const struct frag *, size_t);
 char	*frag_serialise(const struct frag *, int);
 
 void	 results_extract(struct hparse *);

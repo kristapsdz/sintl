@@ -22,45 +22,11 @@
 # include <err.h>
 #endif
 #include <expat.h>
-#include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "extern.h"
-
-/* 
- * XXX: debugging.
- */
-void
-frag_node_print(const struct frag *f, size_t tabs)
-{
-	size_t	 i;
-
-	if (FRAG_NODE == f->type) {
-		for (i = 0; i < tabs; i++) 
-			putchar('\t');
-		printf("<%.*s>\n", (int)f->valsz, f->val);
-	} else if (FRAG_TEXT == f->type) {
-		for (i = 0; i < tabs; i++) 
-			putchar('\t');
-		printf("text: %zu bytes\n", f->valsz);
-	}
-
-	for (i = 0; i < f->childsz; i++)
-		frag_node_print(f->child[i], tabs + 1);
-
-	if (FRAG_NODE == f->type) {
-		for (i = 0; i < tabs; i++) 
-			putchar('\t');
-		if (f->node_closed)
-			printf("</%.*s>\n", (int)f->valsz, f->val);
-		else
-			printf("!!!not closed!!!\n");
-	}
-}
 
 void
 frag_node_free(struct frag *f)
