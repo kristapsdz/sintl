@@ -2,16 +2,18 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
-			<h1>0.1.3</h1>
+			<h1>0.2.0</h1>
 			<address>Kristaps Dzonsons</address>
-			<time datetime="2018-06-28">2018-06-28</time>
+			<time datetime="2018-07-08">2018-07-08</time>
 		</header>
 		<aside>
 			Use <a href="https://github.com/kristapsdz/oconfigure">oconfigure</a> for
 			configuration.
 			Fix an assertion failure.
 			Allow for nested elements in <code>&lt;source&gt;</code> and
-			<code>&lt;target&gt;</code> as defined by the ITS standard.
+			<code>&lt;target&gt;</code> as defined by the ITS standard, but disallow
+			broken phrase element scoping.
+			Update manual.
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
