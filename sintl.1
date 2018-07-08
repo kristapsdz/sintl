@@ -63,6 +63,15 @@ HTML5 input files to be translated or mined for translatable information.
 .Pp
 Each text node in the HTML5 input files is its own translatable string,
 unless the text node is in a phrasing content element.
+.Po 
+Except
+.Li <iframe> ,
+.Li <noscript> ,
+.Li <select> ,
+.Li <script> ,
+and
+.Li <textarea> .
+.Pc
 For example,
 .Bd -literal
 <section>

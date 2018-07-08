@@ -102,7 +102,7 @@ static	const char *phrasing[] = {
 	"s",
 	"samp",
 	/* "script", */
-	"select",
+	/* "select", */
 	"small",
 	"span",
 	"strong",
