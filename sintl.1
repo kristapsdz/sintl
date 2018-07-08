@@ -76,15 +76,15 @@ results in two translatable strings:
 and
 .Qq foobar .
 .Pp
-Leading and trailing white-space for the translatable key is stripped,
-with contiguous white-space collapsing into a single space, and empty
-keys ignored.
+Contiguous white-space is collapsed into a single space and empty keys
+are ignored.
 This is why the text node preceding the
 .Li div
-is ignored.
-You may override this behaviour with the
+is omitted.
+You may override the whitespace behaviour with the
 .Li xml:space="preserve"
-attribute, which affects the current and descendent nodes.
+attribute, which affects the current and descendent nodes by not
+trimming whitespace at all.
 .Pp
 Translation may be controlled with the
 .Li its:translate
@@ -107,7 +107,7 @@ Let the following simple file,
 be used as a template for translating into different languages.
 .Bd -literal
 <!DOCTYPE html>
-<html>
+<html xmlns:its="http://www.w3.org/2005/11/its">
     <head><title>title</title></head>
     <body><p>message</p></body>
 </html>
@@ -154,3 +154,19 @@ The
 utility was written by
 .An Kristaps Dzonsons ,
 .Mt kristaps@bsd.lv .
+.Sh BUGS
+.Nm
+ignores translation comments within translated phrasing content.
+For example:
+.Bd -literal
+<i>Hello, <span its:translate="no">world</span>.</i>
+.Ed
+.Pp
+In this example, the non-translatable content is simply passed into the
+output.
+Non-conformant HTML5, with non-phrasing content embedded in phrasing
+content, is explicitly disallowed.
+For example:
+.Bd -literal
+<i>Hello, <div its:translate="no">world</div>.</i>
+.Ed
