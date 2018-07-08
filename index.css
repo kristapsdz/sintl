@@ -6,6 +6,7 @@ body				{ background-color: #f6f6fa;
 				  color: #333; }
 a				{ text-decoration: none; 
 				  color: blue; }
+.nm				{ font-style: italic; }
 header				{ margin-top: 4rem;
 				  margin-left: auto;
 				  margin-right: auto;
@@ -17,7 +18,7 @@ header span			{ color: #888; }
 footer				{ text-align: center;
 				  font-size: 12pt;
 				  margin: 1em 0; }
-article				{ border-top: thin solid #bbb;
+#main				{ border-top: thin solid #bbb;
 				  border-bottom: thin solid #bbb;
 				  box-shadow: 0 0 4px #ddd;
 				  margin: 2em 0;
@@ -27,14 +28,29 @@ nav ul				{ list-style-type: none;
 				  padding: 0; }
 nav li + li			{ margin-top: 0.5em; }
 code				{ font-size: 11pt; }
+pre.hl				{ color:#000000; background-color:#ffffff; font-size:10pt; font-family:'Courier New',monospace;}
+.hl.num 			{ color:#0086b3; }
+.hl.esc 			{ color:#183691; }
+.hl.str 			{ color:#183691; }
+.hl.pps 			{ color:#183691; }
+.hl.slc 			{ color:#969896; }
+.hl.com 			{ color:#969896; }
+.hl.ppc 			{ color:#a71d5d; }
+.hl.opt 			{ color:#000000; }
+.hl.ipl 			{ color:#183691; }
+.hl.lin 			{ color:#b2b2b2; }
+.hl.kwa 			{ color:#a71d5d; }
+.hl.kwb 			{ color:#0086b3; }
+.hl.kwc 			{ color:#0086b3; }
+.hl.kwd 			{ color:#0086b3; }
 
 @media only screen and (max-width: 760px), only screen and (max-device-width: 760px) {
   header 			{ font-size: 16pt; }
-  article			{ padding: 1em 10%; }
+  #main				{ padding: 1em 10%; }
   header			{ width: 80%; }
 }
 
 @media only screen and (max-width: 400px), only screen and (max-device-width: 400px) {
-  article			{ padding: 1em 2%; }
+  #main				{ padding: 1em 2%; }
   header			{ width: 96%; }
 }

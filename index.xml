@@ -5,7 +5,7 @@
 		<meta charset="utf-8" /> 
 		<title>sintl: simple internationalisation utility</title>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alegreya+Sans:300,300italic,400" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alegreya+Sans:400,400italic" />
 		<link rel="stylesheet" href="index.css" />
 	</head>
 	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication" its:translate="no">
@@ -13,37 +13,46 @@
 			<div><i class="fa fa-fw fa-gears fa-2x"></i> sintl(1)</div>
 			<div><i class="fa fa-fw fa-html5 fa-2x"></i> <span its:translate="yes">simple HTML5 translation</span></div>
 		</header>
-		<article>
+		<article id="main">
 			<p>
-				<a href="sintl.1.html"><span itemprop="name">sintl</span>(1)</a> is <span itemprop="description"
-					its:translate="yes">a simple UNIX utility for managing HTML5 translations</span>.
-				It works similarly to <a href="http://itstool.org/">itstool</a>, except that it's built for HTML5, is in ISO C
-				and <a href="http://opensource.org/licenses/ISC" rel="license">ISC</a> licensed, and depends only on <a
-					href="http://expat.sourceforge.net/">libexpat</a>.
+				<span class="nm" itemprop="name">sintl</span> is an
+				<span itemprop="description" its:translate="yes">
+					<a href="http://opensource.org/licenses/ISC" rel="license">open source</a> UNIX utility for
+					managing HTML5 translations</span>.
+				It works similarly to <a href="http://itstool.org/">itstool</a>, except that it's built exclusively for HTML5,
+				depends only on <a href="http://expat.sourceforge.net/">libexpat</a>, is in C, and works with <a
+					href="http://docs.oasis-open.org/xliff/xliff-core/v2.0/os/xliff-core-v2.0-os.html">XLIFF</a> 
+				instead of <a href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html">PO</a> files.
 			</p>
 			<p>
-				<a href="sintl.1.html">sintl(1)</a> uses a simplified <a href="https://en.wikipedia.org/wiki/XLIFF">XLIFF</a>
-				file to manage its translation dictionaries.
-				It can create XLIFF templates from HTML5 or keep templates up to date with existing dictionaries.
-				The HTML5 must use a simple subset of <a href="http://www.w3.org/TR/its20/">ITS</a> to indicate what should be
+				The <a href="sintl.1.html">sintl(1)</a> utility creates XLIFF templates from HTML5, keeps templates up to date
+				with current translatable content in the HTML5, and joins HTML5 with XLIFF to produce translated output.  
+				The HTML5 input uses a simple subset of <a href="http://www.w3.org/TR/its20/">ITS</a> to indicate what should
 				and should not be translated.
-				<a href="sintl.1.html">sintl(1)</a> then merges HTML5 files with <a href="http://www.w3.org/TR/html5/">HTML5</a>
-				documents to create translated output.
 			</p>
 			<p>
-				In short, input markup within elements labelled as <code>&lt;span
-					its:translate="yes"&gt;this&lt;/span&gt;</code> would be marked for translation.
-				The translation dictionary is just an XML file with key-value pairs.
-				For example, <a href="index.fr.html">index.fr.html</a> holds a partially French-translated page.
-				Easy-peasy.
+				An example input file is as follows.
 			</p>
+			<article data-sblg-article="1" data-sblg-articletag="code" data-sblg-permlink="0"></article>
+			<p>
+				Input markup within elements labelled as <code>&lt;span
+					its:translate="yes"&gt;this&lt;/span&gt;</code> (which is the default) are marked for translation.
+				Phrase elements (&lt;i&gt;, &lt;strong&gt;, etc.) are included in the translatable content to keep paragraphs consistent.
+				The translation dictionary is just an XML file with key-value pairs.
+			</p>
+			<article data-sblg-article="1" data-sblg-articletag="code" data-sblg-permlink="0"></article>
+			<p>
+				Join the translation file with the input file to produce translated content.
+				It's as easy as that.
+			</p>
+			<article data-sblg-article="1" data-sblg-articletag="code" data-sblg-permlink="0"></article>
 			<p>
 				To use, download <a itemprop="downloadURL" href="snapshots/sintl.tar.gz">sintl.tar.gz</a> (<a
 					href="snapshots/sintl.tar.gz.sha512">sha512</a>, <a href="snapshots">archives</a>) and run 
-				<code>make install</code> as usual.
+				<code>./configure</code> and <code>make install</code> as usual.
 				The latest versions are as follows:
 			</p>
-			<nav data-sblg-nav="1" data-sblg-navsz="2" data-sblg-navcontent="1">
+			<nav data-sblg-nav="1" data-sblg-navsz="2" data-sblg-navcontent="1" data-sblg-navtag="version">
 				<i class="fa fa-fw fa-clock-o"></i> 
 				Version <span class="version">${sblg-title}</span> (<time datetime="${sblg-date}">${sblg-date}</time>): ${sblg-aside}
 			</nav>

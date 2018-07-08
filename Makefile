@@ -11,7 +11,7 @@ SRCS		 = extract.c \
 		   main.c \
 		   results.c
 XMLS		 = index.xml
-HTMLS 		 = index.html index.fr.html sintl.1.html
+HTMLS 		 = index.html sintl.1.html
 CSSS 		 = mandoc.css index.css 
 BINDIR 		 = $(PREFIX)/bin
 MANDIR 		 = $(PREFIX)/man
@@ -52,6 +52,24 @@ sintl.tar.gz:
 sintl.tar.gz.sha512: sintl.tar.gz
 	openssl dgst -sha512 sintl.tar.gz >$@
 
+sample-input.html: sample-input.xml
+	( echo '<article data-sblg-article="1" data-sblg-tags="code">'; \
+	  highlight -t 2 -S html -l -f --out-format=xhtml --enclose-pre sample-input.xml ; \
+	  echo '</article>'; ) >$@
+
+sample-output.xml: sample-input.xml sample-input.xliff sintl
+	./sintl -j sample-input.xliff sample-input.xml >$@
+
+sample-output.html: sample-output.xml
+	( echo '<article data-sblg-article="1" data-sblg-tags="code">'; \
+	  highlight -t 2 -S html -l -f --out-format=xhtml --enclose-pre sample-output.xml ; \
+	  echo '</article>'; ) >$@
+
+sample-xliff.html: sample-input.xliff
+	( echo '<article data-sblg-article="1" data-sblg-tags="code">'; \
+	  highlight -t 2 -S xml -l -f --out-format=xhtml --enclose-pre sample-input.xliff ; \
+	  echo '</article>'; ) >$@
+
 $(OBJS): extern.h
 
 atom.xml: versions.xml
@@ -60,14 +78,12 @@ atom.xml: versions.xml
 sintl.1.html: sintl.1
 	mandoc -Ostyle=mandoc.css -Thtml sintl.1 >$@
 
-index.html: index.xml
-	sblg -t index.xml -o $@ versions.xml
-
-index.fr.html: index.xml sintl
-	sblg -t index.xml -o- versions.xml | ./sintl -j fr.xliff >$@
+index.html: index.xml versions.xml sample-input.html sample-xliff.html sample-output.html
+	sblg -s cmdline -t index.xml -o $@ versions.xml sample-input.html sample-xliff.html sample-output.html
 
 clean:
 	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
+	rm -f sample-input.html sample-xliff.html sample-output.html sample-output.xml
 
 distclean: clean
 	rm -f Makefile.configure config.h config.log

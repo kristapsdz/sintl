@@ -1,0 +1,15 @@
+<xliff xmlns="urn:oasis:names:tc:xliff:document:2.0" 
+ version="2.0" srcLang="en" trgLang="fr">
+	<file id="file1">
+		<unit id="unit1">
+			<segment>
+				<source>A test file</source>
+				<target>Un fichier de test</target>
+			</segment>
+			<segment>
+				<source>Hello, <i>world</i>!</source>
+				<target>Bonjour <i>le monde</i> !</target>
+			</segment>
+		</unit>
+	</file>
+</xliff>
