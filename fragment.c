@@ -269,7 +269,7 @@ frag_serialise_r(const struct frag *f,
 }
 
 char *
-frag_serialise(const struct frag *f, int preserve)
+frag_serialise(const struct frag *f, int preserve, int minimise)
 {
 	size_t	 i, sz = 0, max = 0;
 	char	*buf = NULL;

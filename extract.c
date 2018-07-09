@@ -258,7 +258,7 @@ store(struct hparse *p)
 	}
 
 	cp = frag_serialise(p->frag_root, 
-		p->stack[p->stacksz - 1].preserve);
+		p->stack[p->stacksz - 1].preserve, 1);
 	frag_node_free(p->frag_root);
 	p->frag_root = p->frag_current = NULL;
 
@@ -303,10 +303,10 @@ translate(struct hparse *hp)
 	}
 
 	cp = frag_serialise(hp->frag_root, 
-		hp->stack[hp->stacksz - 1].preserve);
+		hp->stack[hp->stacksz - 1].preserve, 1);
 
 	if (NULL == cp) {
-		cp = frag_serialise(hp->frag_root, 1);
+		cp = frag_serialise(hp->frag_root, 1, 0);
 		if (NULL != cp)
 			printf("%s", cp);
 		free(cp);
@@ -370,14 +370,14 @@ xnestend(void *dat, const XML_Char *s)
 
 	if (NEST_TARGET == p->nesttype) {
 		free(p->target);
-		p->target = frag_serialise(p->frag_root, 0);
+		p->target = frag_serialise(p->frag_root, 1, 0);
 		frag_node_free(p->frag_root);
 		p->frag_root = p->frag_current = NULL;
 		if (NULL == p->target)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
-		p->source = frag_serialise(p->frag_root, 0);
+		p->source = frag_serialise(p->frag_root, 1, 0);
 		frag_node_free(p->frag_root);
 		p->frag_root = p->frag_current = NULL;
 		if (NULL == p->source)
@@ -539,7 +539,8 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 
 	/* Check if we should begin translating. */
 
-	for (attp = atts; NULL != *attp; attp += 2)
+	for (attp = atts; NULL != *attp; attp += 2) {
+		warnx("%s: %s", attp[0], attp[1]);
 		if (0 == strcmp(attp[0], "its:translate")) {
 			if (0 == strcasecmp(attp[1], "yes"))
 				dotrans = 1;
@@ -551,6 +552,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			else if (0 == strcasecmp(attp[1], "default"))
 				preserve = -1;
 		}
+	}
 
 	/* Default for whole document. */
 
