@@ -57,6 +57,7 @@ struct	frag {
 	char		 *val; /* element name or text data */
 	size_t		  valsz; /* string length of valsz */
 	int		  node_closed; /* if node, whether closed */
+	int		  has_nonws; /* if text, whether has non-ws */
 	char		**atts; /* if node, attributes */
 	enum fragtype	  type; /* type of node */
 	struct frag	**child; /* array of child nodes */

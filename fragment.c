@@ -131,6 +131,7 @@ frag_node_text(struct frag **root, struct frag **cur,
 	const XML_Char *s, int len)
 {
 	struct frag	*f;
+	size_t		 i;
 
 	if (NULL == *root) {
 #ifdef DEBUG
@@ -170,6 +171,13 @@ frag_node_text(struct frag **root, struct frag **cur,
 			(*cur)->child[(*cur)->childsz - 1]->next = f;
 		(*cur)->childsz++;
 	}
+
+	if (0 == f->has_nonws)
+		for (i = 0; i < (size_t)len; i++)
+			if ( ! isspace((unsigned char)s[i])) {
+				f->has_nonws = 1;
+				break;
+			}
 
 	f->val = realloc(f->val, f->valsz + len);
 	if (NULL == f->val)
@@ -271,11 +279,53 @@ frag_serialise_r(const struct frag *f,
 char *
 frag_serialise(const struct frag *f, int preserve, int minimise)
 {
-	size_t	 i, sz = 0, max = 0;
+	size_t	 i, sz = 0, max = 0, nt, nn;
 	char	*buf = NULL;
+	const struct frag *ff;
 
 	if (NULL == f)
 		return NULL;
+
+	if (minimise) {
+		/*
+		 * First pass of minimisation: remove all fragments that
+		 * are simply whitespace and empty nodes.
+		 */
+
+		ff = f;
+		while (NULL != ff) {
+			nn = nt = 0;
+
+			/* Count all nodes/whitespace. */
+
+			for (i = 0; i < ff->childsz; i++) {
+				nn += FRAG_NODE == ff->child[i]->type;
+				nt += FRAG_TEXT == ff->child[i]->type &&
+					0 == ff->child[i]->has_nonws;
+			}
+
+			/* Only node/whitespace? */
+
+			if (1 != nn || nn + nt != ff->childsz) {
+				ff = NULL;
+				break;
+			}
+
+			/* Descend into node. */
+
+			if (FRAG_NODE == ff->child[0]->type) 
+				ff = ff->child[0];
+			else if (FRAG_NODE == ff->child[1]->type) 
+				ff = ff->child[1];
+			else if (FRAG_NODE == ff->child[2]->type) 
+				ff = ff->child[2];
+			else
+				abort();
+
+			if (0 == ff->childsz)
+				return NULL;
+		}
+	}
 
 	frag_serialise_r(f, &buf, &sz, &max, preserve);
 
