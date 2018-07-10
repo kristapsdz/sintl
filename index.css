@@ -12,6 +12,7 @@ header				{ margin-top: 4rem;
 				  margin-right: auto;
 				  font-size: 24pt;
 				  width: 60%; }
+strong, b			{ font-weight: 500; }
 header > * > *:first-child	{ color: #666; 
 			  	  font-size: 80%; }
 header span			{ color: #888; }
@@ -24,6 +25,7 @@ footer				{ text-align: center;
 				  margin: 2em 0;
 				  padding: 1em 20%;
 				  background-color: #fff; }
+nav i.fa			{ font-size: smaller; }
 nav ul				{ list-style-type: none; 
 				  padding: 0; }
 nav li + li			{ margin-top: 0.5em; }

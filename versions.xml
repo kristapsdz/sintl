@@ -2,6 +2,17 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
+			<h1>0.2.1</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2018-07-10">2018-07-10</time>
+		</header>
+		<aside>
+			Add initial reduction and minimisation.
+			These optimise translatable content to remove superfluous tags.
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
 			<h1>0.2.0</h1>
 			<address>Kristaps Dzonsons</address>
 			<time datetime="2018-07-08">2018-07-08</time>

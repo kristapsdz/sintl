@@ -5,7 +5,7 @@
 		<meta charset="utf-8" /> 
 		<title>sintl: simple internationalisation utility</title>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alegreya+Sans:400,400italic" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Alegreya+Sans:400,400italic,500" />
 		<link rel="stylesheet" href="index.css" />
 	</head>
 	<body itemscope="itemscope" itemtype="http://schema.org/SoftwareApplication" its:translate="no">
@@ -23,6 +23,10 @@
 				depends only on <a href="http://expat.sourceforge.net/">libexpat</a>, is in C, and works with <a
 					href="http://docs.oasis-open.org/xliff/xliff-core/v2.0/os/xliff-core-v2.0-os.html">XLIFF</a> 
 				instead of <a href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html">PO</a> files.
+			</p>
+			<p>
+				<strong>Warning</strong>: this tool is still experimental.
+				Its support for the XLIFF and ITS standards will continue to unfold.
 			</p>
 			<p>
 				The <a href="sintl.1.html">sintl(1)</a> utility creates XLIFF templates from HTML5, keeps templates up to date
@@ -50,9 +54,9 @@
 				To use, download <a itemprop="downloadURL" href="snapshots/sintl.tar.gz">sintl.tar.gz</a> (<a
 					href="snapshots/sintl.tar.gz.sha512">sha512</a>, <a href="snapshots">archives</a>) and run 
 				<code>./configure</code> and <code>make install</code> as usual.
-				The latest versions are as follows:
+				The last versions are as follows:
 			</p>
-			<nav data-sblg-nav="1" data-sblg-navsz="2" data-sblg-navcontent="1" data-sblg-navtag="version">
+			<nav data-sblg-nav="1" data-sblg-navcontent="1" data-sblg-navtag="version">
 				<i class="fa fa-fw fa-clock-o"></i> 
 				Version <span class="version">${sblg-title}</span> (<time datetime="${sblg-date}">${sblg-date}</time>): ${sblg-aside}
 			</nav>

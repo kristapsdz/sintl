@@ -63,7 +63,7 @@ HTML5 input files to be translated or mined for translatable information.
 .Pp
 Each text node in the HTML5 input files is its own translatable string,
 unless the text node is in a phrasing content element.
-.Po 
+.Po
 Except
 .Li <iframe> ,
 .Li <noscript> ,
@@ -108,6 +108,27 @@ content.
 When set to
 .Li yes ,
 the opposite is true.
+.Ss Optimisations
+.Nm
+performs a number of optimisations to prevent superfluous content from
+being considered for translation.
+First, translation strings consisting only of an empty tag are removed.
+For example,
+.Bd -literal
+<p> <img src="path/to/image.png" /> </p>
+.Ed
+.Pp
+These tags may be surrounded by white-space and arbitrarily nested.
+.Pp
+Second, tags surrounding text are stripped away.
+For example,
+.Bd -literal
+<p> <a href="a/link.html"><i><strong>Hello.</strong></i></a> </p>
+.Ed
+.Pp
+This will produce only the
+.Dq Hello.
+for translation.
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
