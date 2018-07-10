@@ -490,15 +490,24 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	const XML_Char	**attp;
 	int		  dotrans = 0, preserve = 0, phrase = 0;
 	const char	**elems;
+	const char	 *its = NULL;
 
 	/* Warn if we don't have the correct XML namespace. */
 
 	if (0 == strcasecmp(s, "html")) {
+		p->lang = NULL;
 		for (attp = atts; NULL != *attp; attp += 2) 
 			if (0 == strcasecmp(attp[0], "xmlns:its"))
-				break;
-		if (NULL == *attp)
-			lerr(p->fname, p->p, "missing xmlns:its");
+				its = attp[1];
+			else if (0 == strcasecmp(attp[0], "lang"))
+				p->lang = attp[1];
+
+		if (NULL == its)
+			lerr(p->fname, p->p, 
+				"missing <html> xmlns:its");
+		if (NULL == p->lang)
+			lerr(p->fname, p->p, 
+				"missing <html> language");
 	}
 
 	/*
@@ -548,8 +557,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 
 	/* Check if we should begin translating. */
 
-	for (attp = atts; NULL != *attp; attp += 2) {
-		warnx("%s: %s", attp[0], attp[1]);
+	for (attp = atts; NULL != *attp; attp += 2)
 		if (0 == strcmp(attp[0], "its:translate")) {
 			if (0 == strcasecmp(attp[1], "yes"))
 				dotrans = 1;
@@ -561,7 +569,6 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			else if (0 == strcasecmp(attp[1], "default"))
 				preserve = -1;
 		}
-	}
 
 	/* Default for whole document. */
 

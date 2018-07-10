@@ -86,6 +86,7 @@ struct	hparse {
 	size_t		  stacksz; /* stack size */
 	struct xliff	 *xliffs; /* translation parts */
 	size_t		  xliffsz; /* number of translation patrs */
+	const char	 *lang; /* <html> language definition */
 };
 
 enum	xnesttype {

@@ -150,7 +150,7 @@ We can then create an initial XLIFF file as follows.
 Now edit the XLIFF file.
 .Bd -literal
 <xliff xmlns="urn:oasis:names:tc:xliff:document:2.0"
- version="2.0" srcLang="TODO" trgLang="TODO">
+ version="2.0" srcLang="TODO" trgLang="en">
     <file id="file1">
         <unit id="unit1">
           <segment>
@@ -166,6 +166,15 @@ Now edit the XLIFF file.
 </xliff>
 .Ed
 .Pp
+If the
+.Li lang
+attribute were specified on the input
+.Li <html>
+root element, it would have been propogated in the
+.Li srcLang
+atttribute.
+It defaults to
+.Li TODO .
 Finally, create a translated output file as follows.
 .Pp
 .D1 sintl -j index.en.xliff index.xml > index.en.html

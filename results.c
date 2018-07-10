@@ -141,8 +141,9 @@ results_extract(struct hparse *p)
 
 	qsort(p->words, p->wordsz, sizeof(char *), cmp);
 
-	puts("<xliff xmlns=\"" XLIFFURN "\" "
-		"version=\"2.0\" srcLang=\"TODO\" trgLang=\"TODO\">");
+	printf("<xliff xmlns=\"" XLIFFURN "\" "
+		"version=\"2.0\" srcLang=\"%s\" trgLang=\"TODO\">\n",
+		NULL == p->lang ? "TODO" : p->lang);
 	puts("\t<file id=\"file1\">");
 	puts("\t\t<unit id=\"unit1\">");
 	for (i = 0; i < p->wordsz; i++) {
