@@ -84,8 +84,7 @@ struct	hparse {
 	struct frag	 *frag_root; /* if parsing, fragment root */
 	struct stack	  stack[64]; /* stack of contexts */
 	size_t		  stacksz; /* stack size */
-	struct xliff	 *xliffs; /* translation parts */
-	size_t		  xliffsz; /* number of translation patrs */
+	const struct xparse *xp;
 	char	 	 *lang; /* <html> language definition */
 };
 

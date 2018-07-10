@@ -62,8 +62,8 @@ results_update(struct hparse *hp)
 		/* De-dupe XML file words. */
 		if (i && 0 == strcmp(cp, hp->words[i - 1]))
 			continue;
-		for (j = 0; j < hp->xliffsz; j++)
-			if (0 == strcmp(cp, hp->xliffs[j].source))
+		for (j = 0; j < hp->xp->xliffsz; j++)
+			if (0 == strcmp(cp, hp->xp->xliffs[j].source))
 				break;
 
 		/* Append word to merge buffer. */
@@ -78,8 +78,8 @@ results_update(struct hparse *hp)
 		}
 
 		/* If in the XLIFF, append the source and target. */
-		sorted[ssz].target = j == hp->xliffsz ? 
-			NULL : hp->xliffs[j].target;
+		sorted[ssz].target = j == hp->xp->xliffsz ? 
+			NULL : hp->xp->xliffs[j].target;
 		sorted[ssz++].source = cp;
 	}
 
@@ -88,8 +88,8 @@ results_update(struct hparse *hp)
 	 * TODO: this should have a command-line option, as at this
 	 * point we're keeping things we're no longer translating.
 	 */
-	for (i = 0; i < hp->xliffsz; i++) {
-		cp = hp->xliffs[i].source;
+	for (i = 0; i < hp->xp->xliffsz; i++) {
+		cp = hp->xp->xliffs[i].source;
 		for (j = 0; j < hp->wordsz; j++)
 			if (0 == strcmp(cp, hp->words[j]))
 				break;
@@ -106,7 +106,7 @@ results_update(struct hparse *hp)
 			}
 		}
 
-		sorted[ssz].target = hp->xliffs[i].target;
+		sorted[ssz].target = hp->xp->xliffs[i].target;
 		sorted[ssz++].source = cp;
 	}
 
