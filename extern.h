@@ -86,7 +86,7 @@ struct	hparse {
 	size_t		  stacksz; /* stack size */
 	struct xliff	 *xliffs; /* translation parts */
 	size_t		  xliffsz; /* number of translation patrs */
-	const char	 *lang; /* <html> language definition */
+	char	 	 *lang; /* <html> language definition */
 };
 
 enum	xnesttype {
@@ -111,6 +111,8 @@ struct	xparse {
 	char		 *target; /* current target in segment */
 	size_t		  nest; /* nesting in extraction */
 	enum xnesttype	  nesttype; /* type of nesting */
+	char	 	 *srclang; /* <xliff> srcLang definition */
+	char	 	 *trglang; /* <xliff> trgLang definition */
 };
 
 __BEGIN_DECLS

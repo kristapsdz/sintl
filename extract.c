@@ -204,6 +204,7 @@ hparse_free(struct hparse *hp)
 
 	frag_node_free(hp->frag_root);
 	free(hp->words);
+	free(hp->lang);
 	free(hp);
 }
 
@@ -234,6 +235,8 @@ xparse_free(struct xparse *xp)
 	free(xp->target);
 	free(xp->source);
 	free(xp->xliffs);
+	free(xp->srclang);
+	free(xp->trglang);
 	free(xp);
 }
 
@@ -403,8 +406,25 @@ static void
 xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct xparse	 *p = dat;
+	const XML_Char	**attp;
 
-	if (0 == strcmp(s, "source")) {
+	if (0 == strcmp(s, "xliff")) {
+		free(p->srclang);
+		free(p->trglang);
+		p->srclang = p->trglang = NULL;
+		for (attp = atts; NULL != *attp; attp += 2)
+			if (0 == strcmp(attp[0], "srcLang")) {
+				free(p->srclang);
+				p->srclang = strdup(attp[1]);
+				if (NULL == p->srclang)
+					err(EXIT_FAILURE, NULL);
+			} else if (0 == strcmp(attp[0], "trgLang")) {
+				free(p->trglang);
+				p->trglang = strdup(attp[1]);
+				if (NULL == p->trglang)
+					err(EXIT_FAILURE, NULL);
+			}
+	} else if (0 == strcmp(s, "source")) {
 		p->nest = 1;
 		p->nesttype = NEST_SOURCE;
 		XML_SetDefaultHandlerExpand(p->p, xtext);
@@ -495,12 +515,17 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	/* Warn if we don't have the correct XML namespace. */
 
 	if (0 == strcasecmp(s, "html")) {
+		free(p->lang);
 		p->lang = NULL;
 		for (attp = atts; NULL != *attp; attp += 2) 
-			if (0 == strcasecmp(attp[0], "xmlns:its"))
+			if (0 == strcasecmp(attp[0], "xmlns:its")) {
 				its = attp[1];
-			else if (0 == strcasecmp(attp[0], "lang"))
-				p->lang = attp[1];
+			} else if (0 == strcasecmp(attp[0], "lang")) {
+				free(p->lang);
+				p->lang = strdup(attp[1]);
+				if (NULL == p->lang)
+					err(EXIT_FAILURE, NULL);
+			}
 
 		if (NULL == its)
 			lerr(p->fname, p->p, 
