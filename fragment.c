@@ -277,7 +277,7 @@ frag_serialise_r(const struct frag *f,
 }
 
 char *
-frag_serialise(const struct frag *f, int preserve, int minimise)
+frag_serialise(const struct frag *f, int preserve, int minimise, int *reduce)
 {
 	size_t	 i, sz = 0, max = 0, nt, nn;
 	char	*buf = NULL;
@@ -295,6 +295,13 @@ frag_serialise(const struct frag *f, int preserve, int minimise)
 		ff = f;
 		while (NULL != ff) {
 			nn = nt = 0;
+
+			/* Only whitespace? */
+
+			if (1 == ff->childsz &&
+			    FRAG_TEXT == ff->child[0]->type &&
+			    0 == ff->child[0]->has_nonws)
+				return NULL;
 
 			/* Count all nodes/whitespace. */
 
@@ -327,6 +334,52 @@ frag_serialise(const struct frag *f, int preserve, int minimise)
 		}
 	}
 
+	if (NULL != reduce) {
+		ff = f;
+		while (NULL != ff) {
+			nn = nt = 0;
+
+			/* Only whitespace?  Great. */
+
+			if (1 == ff->childsz &&
+			    FRAG_TEXT == ff->child[0]->type &&
+			    ff->child[0]->has_nonws) {
+				ff = ff->child[0];
+				break;
+			}
+
+			/* Count all nodes/whitespace. */
+
+			for (i = 0; i < ff->childsz; i++) {
+				nn += FRAG_NODE == ff->child[i]->type;
+				nt += FRAG_TEXT == ff->child[i]->type &&
+					0 == ff->child[i]->has_nonws;
+			}
+
+			/* Only node/whitespace? */
+
+			if (1 != nn || nn + nt != ff->childsz) {
+				ff = NULL;
+				break;
+			}
+
+			/* Descend into node. */
+
+			if (FRAG_NODE == ff->child[0]->type) 
+				ff = ff->child[0];
+			else if (FRAG_NODE == ff->child[1]->type) 
+				ff = ff->child[1];
+			else if (FRAG_NODE == ff->child[2]->type) 
+				ff = ff->child[2];
+			else
+				abort();
+		}
+		if (NULL != ff) {
+			f = ff;
+			*reduce = 1;
+		}
+	}
+
 	frag_serialise_r(f, &buf, &sz, &max, preserve);
 
 	if (0 == sz) {
@@ -345,4 +398,58 @@ frag_serialise(const struct frag *f, int preserve, int minimise)
 	}
 
 	return buf;
+}
+
+static void
+frag_print(const char *cp, size_t sz, int preserve)
+{
+	size_t	 i;
+
+	if (preserve) {
+		printf("%.*s", (int)sz, cp);
+		return;
+	}
+
+	for (i = 0; i < sz; ) {
+		putchar(cp[i++]);
+		if ( ! isspace((unsigned char)cp[i - 1])) 
+			continue;
+		while (i < sz && isspace((unsigned char)cp[i]))
+			i++;
+	}
+}
+
+static void
+frag_merge_r(const struct frag *f, const char *source, 
+	const char *target, int preserve)
+{
+	size_t	 i;
+	const char **attp;
+
+	if (FRAG_TEXT == f->type) {
+		if (0 == strncmp(source, f->val, f->valsz))
+			printf("%s", target);
+		else
+			frag_print(f->val, f->valsz, preserve);
+	} else if (FRAG_NODE == f->type) {
+		printf("<%.*s", (int)f->valsz, f->val);
+		attp = (const char **)f->atts;
+		for ( ; NULL != *attp; attp += 2)
+			printf(" %s=\"%s\"", attp[0], attp[1]);
+		putchar('>');
+	}
+
+	for (i = 0; i < f->childsz; i++)
+		frag_merge_r(f->child[i], source, target, preserve);
+
+	if (FRAG_NODE == f->type)
+		printf("</%.*s>", (int)f->valsz, f->val);
+}
+
+void
+frag_print_merge(const struct frag *root, const char *source, 
+	const char *target, int preserve)
+{
+
+	frag_merge_r(root, source, target, preserve);
 }

@@ -246,6 +246,7 @@ static int
 store(struct hparse *p)
 {
 	char	*cp = NULL;
+	int	 reduce = 0;
 
 	assert(POP_EXTRACT == p->op);
 	assert(NULL != p->frag_root);
@@ -258,7 +259,7 @@ store(struct hparse *p)
 	}
 
 	cp = frag_serialise(p->frag_root, 
-		p->stack[p->stacksz - 1].preserve, 1);
+		p->stack[p->stacksz - 1].preserve, 1, &reduce);
 	frag_node_free(p->frag_root);
 	p->frag_root = p->frag_current = NULL;
 
@@ -291,6 +292,7 @@ translate(struct hparse *hp)
 {
 	char	*cp;
 	size_t	 i;
+	int	 reduce = 0;
 
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
@@ -303,10 +305,10 @@ translate(struct hparse *hp)
 	}
 
 	cp = frag_serialise(hp->frag_root, 
-		hp->stack[hp->stacksz - 1].preserve, 1);
+		hp->stack[hp->stacksz - 1].preserve, 1, &reduce);
 
 	if (NULL == cp) {
-		cp = frag_serialise(hp->frag_root, 1, 0);
+		cp = frag_serialise(hp->frag_root, 1, 0, NULL);
 		if (NULL != cp)
 			printf("%s", cp);
 		free(cp);
@@ -315,19 +317,26 @@ translate(struct hparse *hp)
 		return 1;
 	}
 
-	frag_node_free(hp->frag_root);
-	hp->frag_root = hp->frag_current = NULL;
-
 	for (i = 0; i < hp->xliffsz; i++)
 		if (0 == strcmp(hp->xliffs[i].source, cp)) {
-			printf("%s", hp->xliffs[i].target);
+			if (reduce)
+				frag_print_merge(hp->frag_root,
+					hp->xliffs[i].source,
+					hp->xliffs[i].target,
+					hp->stack[hp->stacksz - 1].preserve);
+			else
+				printf("%s", hp->xliffs[i].target);
 			free(cp);
+			frag_node_free(hp->frag_root);
+			hp->frag_root = hp->frag_current = NULL;
 			return 1;
 		}
 
 	lerr(hp->fname, hp->p, "no translation found");
 	printf("%s", cp);
 	free(cp);
+	frag_node_free(hp->frag_root);
+	hp->frag_root = hp->frag_current = NULL;
 	return 1;
 }
 
@@ -370,14 +379,14 @@ xnestend(void *dat, const XML_Char *s)
 
 	if (NEST_TARGET == p->nesttype) {
 		free(p->target);
-		p->target = frag_serialise(p->frag_root, 1, 0);
+		p->target = frag_serialise(p->frag_root, 1, 0, NULL);
 		frag_node_free(p->frag_root);
 		p->frag_root = p->frag_current = NULL;
 		if (NULL == p->target)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
-		p->source = frag_serialise(p->frag_root, 1, 0);
+		p->source = frag_serialise(p->frag_root, 1, 0, NULL);
 		frag_node_free(p->frag_root);
 		p->frag_root = p->frag_current = NULL;
 		if (NULL == p->source)
