@@ -512,7 +512,11 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	const char	**elems;
 	const char	 *its = NULL;
 
-	/* Warn if we don't have the correct XML namespace. */
+	/* 
+	 * Warn if we don't have the correct XML namespace.
+	 * FIXME: we should really only start translating within the
+	 * declared ITS namespace, not for the whole document.
+	 */
 
 	if (0 == strcasecmp(s, "html")) {
 		free(p->lang);
@@ -567,13 +571,17 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 
 	/*
 	 * If we're translating, then echo the tags.
-	 * Make sure we accomodate for minimisations.
+	 * Don't emit "its:translate", "xml:space", or the xmlns:its
+	 * declaration.
+	 * FIXME: make this optional.
+	 * Make sure we accomodate for void elements.
 	 */
 
 	if (POP_JOIN == p->op) {
 		printf("<%s", s);
 		for (attp = atts; NULL != *attp; attp += 2) {
 			if (POP_JOIN == p->op &&
+			    0 == strcasecmp(s, "html") &&
 			    0 == strcasecmp(attp[0], "xmlns:its"))
 				continue;
 			if (POP_JOIN == p->op &&
@@ -582,8 +590,25 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			if (POP_JOIN == p->op &&
 			    0 == strcasecmp(attp[0], "xml:space"))
 				continue;
+			if (POP_JOIN == p->op &&
+			    0 == strcasecmp(s, "html") &&
+			    0 == strcasecmp(attp[0], "lang") &&
+			    NULL == p->xp->trglang)
+				continue;
+			if (POP_JOIN == p->op &&
+			    0 == strcasecmp(s, "html") &&
+			    0 == strcasecmp(attp[0], "lang") &&
+			    NULL != p->xp->trglang) {
+				printf(" lang=\"%s\"", p->xp->trglang);
+				continue;
+			}
 			printf(" %s=\"%s\"", attp[0], attp[1]);
 		}
+		if (POP_JOIN == p->op &&
+		    0 == strcasecmp(s, "html") &&
+		    NULL == p->lang &&
+		    NULL != p->xp->trglang) 
+			printf(" lang=\"%s\"", p->xp->trglang);
 		if (xmlvoid(s))
 			putchar('/');
 		putchar('>');
