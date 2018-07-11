@@ -66,6 +66,13 @@ struct	frag {
 	struct frag	 *parent; /* parent (NULL if root) */
 };
 
+struct	fragseq {
+	struct frag	*root;
+	struct frag	*cur;
+	char		*copy;
+	size_t		 copysz;
+};
+
 /*
  * Parse tracker for a document that's either going to be translated or
  * scanned for translatable parts.
@@ -80,8 +87,7 @@ struct	hparse {
 	char		**words; /* if scanning, scanned words */
 	size_t		  wordsz; /* number of words */
 	size_t		  wordmax; /* word buffer size */
-	struct frag	 *frag_current; /* current fragment position */
-	struct frag	 *frag_root; /* if parsing, fragment root */
+	struct fragseq	  frag;
 	struct stack	  stack[64]; /* stack of contexts */
 	size_t		  stacksz; /* stack size */
 	const struct xparse *xp;
@@ -104,8 +110,7 @@ struct	xparse {
 	struct xliff	 *xliffs; /* current xliffs */
 	size_t		  xliffsz; /* current size of xliffs */
 	size_t		  xliffmax; /* xliff buffer size */
-	struct frag	 *frag_current; /* current fragment position */
-	struct frag	 *frag_root; /* if parsing, fragment root */
+	struct fragseq	  frag;
 	char		 *source; /* current source in segment */
 	char		 *target; /* current target in segment */
 	size_t		  nest; /* nesting in extraction */
@@ -121,14 +126,15 @@ int	 join(const char *, XML_Parser, int, char *[]);
 int	 update(const char *, XML_Parser, int, char *[]);
 
 void 	 frag_node_free(struct frag *);
-void	 frag_node_start(struct frag **, struct frag **, 
-	 	const XML_Char *, const XML_Char **);
-void	 frag_node_text(struct frag **, struct frag **, 
-	 	const XML_Char *, int);
-void	 frag_node_end(struct frag **, const XML_Char *);
-char	*frag_serialise(const struct frag *, int, int, int *);
-void	 frag_print_merge(const struct frag *, 
-		const char *, const char *, int);
+void	 frag_node_start(struct fragseq *, 
+		const XML_Char *, const XML_Char **);
+void	 frag_node_text(struct fragseq *,
+	 	const XML_Char *, size_t, int);
+void	 frag_node_end(struct fragseq *, const XML_Char *);
+char	*frag_serialise(const struct fragseq *, int, int, int *);
+void	 frag_print_merge(const struct fragseq *, 
+		const char *, const char *);
+void	 fragseq_clear(struct fragseq *);
 
 void	 results_extract(struct hparse *);
 void	 results_update(struct hparse *);

@@ -39,10 +39,6 @@ frag_node_free(struct frag *f)
 	if (NULL == f)
 		return;
 
-#ifdef DEBUG
-	warnx("%s", __func__);
-#endif
-
 	for (i = 0; i < f->childsz; i++)
 		frag_node_free(f->child[i]);
 
@@ -64,31 +60,24 @@ frag_node_free(struct frag *f)
  * This will set "root" and "cur" as required.
  */
 void
-frag_node_start(struct frag **root, struct frag **cur,
+frag_node_start(struct fragseq *q,
 	const XML_Char *s, const XML_Char **atts)
 {
 	struct frag	 *f;
 	size_t		  i = 0;
 	const XML_Char	**attp;
 
-	if (NULL == *root) {
-#ifdef DEBUG
-	warnx("%s: (new root)", __func__);
-#endif
-		assert(NULL == *cur);
-		*root = calloc(1, sizeof(struct frag));
-		if (NULL == *root)
+	if (NULL == q->root) {
+		assert(NULL == q->cur);
+		q->root = calloc(1, sizeof(struct frag));
+		if (NULL == q->root)
 			err(EXIT_FAILURE, NULL);
-		(*root)->type = FRAG_ROOT;
-		*cur = *root;
+		q->root->type = FRAG_ROOT;
+		q->cur = q->root;
 	}
 
-#ifdef DEBUG
-	warnx("%s: %s", __func__, s);
-#endif
-
-	assert(NULL != *cur);
-	assert(NULL != *root);
+	assert(NULL != q->cur);
+	assert(NULL != q->root);
 
 	for (attp = atts; NULL != *attp; attp += 2, i += 2) 
 		continue;
@@ -100,7 +89,7 @@ frag_node_start(struct frag **root, struct frag **cur,
 	f->type = FRAG_NODE;
 	f->val = strdup(s);
 	f->valsz = strlen(f->val);
-	f->parent = *cur;
+	f->parent = q->cur;
 	f->atts = calloc(i + 1, sizeof(char *));
 	if (NULL == f->atts)
 		err(EXIT_FAILURE, NULL);
@@ -109,16 +98,16 @@ frag_node_start(struct frag **root, struct frag **cur,
 		f->atts[i + 1] = strdup(attp[1]);
  	}
 
-	(*cur)->child = reallocarray
-		((*cur)->child, (*cur)->childsz + 1,
+	q->cur->child = reallocarray
+		(q->cur->child, q->cur->childsz + 1,
 		 sizeof(struct frag *));
-	if (NULL == (*cur)->child)
+	if (NULL == q->cur->child)
 		err(EXIT_FAILURE, NULL);
-	(*cur)->child[(*cur)->childsz] = f;
-	if ((*cur)->childsz)
-		(*cur)->child[(*cur)->childsz - 1]->next = f;
-	(*cur)->childsz++;
-	*cur = f;
+	q->cur->child[q->cur->childsz] = f;
+	if (q->cur->childsz)
+		q->cur->child[q->cur->childsz - 1]->next = f;
+	q->cur->childsz++;
+	q->cur = f;
 }
 
 /*
@@ -127,78 +116,103 @@ frag_node_start(struct frag **root, struct frag **cur,
  * This will set "root" and "cur" as required.
  */
 void
-frag_node_text(struct frag **root, struct frag **cur, 
-	const XML_Char *s, int len)
+frag_node_text(struct fragseq *q,
+	const XML_Char *s, size_t len, int preserve)
 {
 	struct frag	*f;
 	size_t		 i;
 
-	if (NULL == *root) {
-#ifdef DEBUG
-	warnx("%s: (new root)", __func__);
-#endif
-		assert(NULL == *cur);
-		*root = calloc(1, sizeof(struct frag));
-		if (NULL == *root)
+	q->copy = realloc(q->copy, q->copysz + len);
+	if (NULL == q->copy)
+		err(EXIT_FAILURE, NULL);
+	memcpy(q->copy + q->copysz, s, len);
+	q->copysz += len;
+
+	/* Allocate root, if not existing. */
+
+	if (NULL == q->root) {
+		assert(NULL == q->cur);
+		q->root = calloc(1, sizeof(struct frag));
+		if (NULL == q->root)
 			err(EXIT_FAILURE, NULL);
-		(*root)->type = FRAG_ROOT;
-		*cur = *root;
+		q->root->type = FRAG_ROOT;
+		q->cur = q->root;
 	}
 
-#ifdef DEBUG
-	warnx("%s: (text)", __func__);
-#endif
+	assert(NULL != q->root);
+	assert(NULL != q->cur);
 
-	assert(NULL != *root);
-	assert(NULL != *cur);
+	f = q->cur->childsz ? 
+		q->cur->child[q->cur->childsz - 1] : NULL;
 
-	f = (*cur)->childsz ? 
-		(*cur)->child[(*cur)->childsz - 1] : NULL;
+	/* Allocate text node, if applicable. */
 
 	if (NULL == f || FRAG_TEXT != f->type) {
 		f = calloc(1, sizeof(struct frag));
 		if (NULL == f)
 			err(EXIT_FAILURE, NULL);
 		f->type = FRAG_TEXT;
-		f->parent = *cur;
-		(*cur)->child = reallocarray
-			((*cur)->child, (*cur)->childsz + 1,
+		f->parent = q->cur;
+		q->cur->child = reallocarray
+			(q->cur->child, q->cur->childsz + 1,
 			 sizeof(struct frag *));
-		if (NULL == (*cur)->child)
+		if (NULL == q->cur->child)
 			err(EXIT_FAILURE, NULL);
-		(*cur)->child[(*cur)->childsz] = f;
-		if ((*cur)->childsz)
-			(*cur)->child[(*cur)->childsz - 1]->next = f;
-		(*cur)->childsz++;
+		q->cur->child[q->cur->childsz] = f;
+		if (q->cur->childsz)
+			q->cur->child[q->cur->childsz - 1]->next = f;
+		q->cur->childsz++;
 	}
 
+	/* See if we have any non-spaces. */
+
 	if (0 == f->has_nonws)
-		for (i = 0; i < (size_t)len; i++)
+		for (i = 0; i < len; i++)
 			if ( ! isspace((unsigned char)s[i])) {
 				f->has_nonws = 1;
 				break;
 			}
 
+	/*
+	 * If we're in preserve mode, then copy in all of our data.
+	 * If we're not, then collapse contiguous white-space and also
+	 * convert newlines to spaces.
+	 */
+
+	if (preserve) {
+		f->val = realloc(f->val, f->valsz + len);
+		if (NULL == f->val)
+			err(EXIT_FAILURE, NULL);
+		memcpy(f->val + f->valsz, s, len);
+		f->valsz += len;
+		return;
+	} 
+
 	f->val = realloc(f->val, f->valsz + len);
 	if (NULL == f->val)
 		err(EXIT_FAILURE, NULL);
-	memcpy(f->val + f->valsz, s, len);
-	f->valsz += len;
+	for (i = 0; i < len; ) {
+		if (f->valsz &&
+		    isspace((unsigned char)s[i]) &&
+		    isspace((unsigned char)f->val[f->valsz - 1])) {
+			i++;
+			continue;
+		}
+		f->val[f->valsz++] = s[i++];
+		if (isspace((unsigned char)f->val[f->valsz - 1]))
+			f->val[f->valsz - 1] = ' ';
+	}
 }
 
 void
-frag_node_end(struct frag **cur, const XML_Char *s)
+frag_node_end(struct fragseq *q, const XML_Char *s)
 {
 
-#ifdef DEBUG
-	warnx("%s: %s", __func__, s);
-#endif
-
-	assert(NULL != *cur);
-	assert(FRAG_NODE == (*cur)->type);
-	assert(0 == strcmp(s, (*cur)->val));
-	(*cur)->node_closed = 1;
-	*cur = (*cur)->parent;
+	assert(NULL != q->cur);
+	assert(FRAG_NODE == q->cur->type);
+	assert(0 == strcmp(s, q->cur->val));
+	q->cur->node_closed = 1;
+	q->cur = q->cur->parent;
 }
 
 static void
@@ -221,27 +235,10 @@ append(char **buf, size_t *sz, size_t *max, const XML_Char *s, size_t len)
 }
 
 static void
-strip(char *buf, size_t *start, const char *nstr, size_t len)
-{
-	size_t	 i;
-
-	for (i = 0; i < len; (*start)++) {
-		buf[*start] = nstr[i];
-		if ( ! isspace((unsigned char)nstr[i++]))
-			continue;
-		buf[*start] = ' ';
-		while (i < len && isspace((unsigned char)nstr[i]))
-			i++;
-	}
-
-	buf[*start] = '\0';
-}
-
-static void
 frag_serialise_r(const struct frag *f, 
-	char **buf, size_t *sz, size_t *max, int preserve)
+	char **buf, size_t *sz, size_t *max)
 {
-	size_t	 	  i, sv;
+	size_t	 	  i;
 	const char	**attp;
 
 	assert(NULL != f);
@@ -258,16 +255,11 @@ frag_serialise_r(const struct frag *f,
 			append(buf, sz, max, "\"", 1);
 		}
 		append(buf, sz, max, ">", 1);
-	} else if (FRAG_TEXT == f->type && ! preserve) {
-		sv = *sz;
-		append(buf, sz, max, f->val, f->valsz);
-		*sz = sv;
-		strip(*buf, sz, f->val, f->valsz);
 	} else if (FRAG_TEXT == f->type)
 		append(buf, sz, max, f->val, f->valsz);
 
 	for (i = 0; i < f->childsz; i++)
-		frag_serialise_r(f->child[i], buf, sz, max, preserve);
+		frag_serialise_r(f->child[i], buf, sz, max);
 
 	if (FRAG_NODE == f->type && f->node_closed) {
 		append(buf, sz, max, "</", 2);
@@ -277,13 +269,14 @@ frag_serialise_r(const struct frag *f,
 }
 
 char *
-frag_serialise(const struct frag *f, int preserve, int minimise, int *reduce)
+frag_serialise(const struct fragseq *q, 
+	int keepempty, int minimise, int *reduce)
 {
 	size_t	 i, sz = 0, max = 0, nt, nn;
 	char	*buf = NULL;
-	const struct frag *ff;
+	const struct frag *ff, *f;
 
-	if (NULL == f)
+	if (NULL == q || NULL == (f = q->root))
 		return NULL;
 
 	if (minimise) {
@@ -380,12 +373,12 @@ frag_serialise(const struct frag *f, int preserve, int minimise, int *reduce)
 		}
 	}
 
-	frag_serialise_r(f, &buf, &sz, &max, preserve);
+	frag_serialise_r(f, &buf, &sz, &max);
 
 	if (0 == sz) {
 		free(buf);
 		return NULL;
-	} else if (preserve)
+	} else if (keepempty)
 		return buf;
 
 	for (i = 0; i < sz; i++)
@@ -401,27 +394,8 @@ frag_serialise(const struct frag *f, int preserve, int minimise, int *reduce)
 }
 
 static void
-frag_print(const char *cp, size_t sz, int preserve)
-{
-	size_t	 i;
-
-	if (preserve) {
-		printf("%.*s", (int)sz, cp);
-		return;
-	}
-
-	for (i = 0; i < sz; ) {
-		putchar(cp[i++]);
-		if ( ! isspace((unsigned char)cp[i - 1])) 
-			continue;
-		while (i < sz && isspace((unsigned char)cp[i]))
-			i++;
-	}
-}
-
-static void
-frag_merge_r(const struct frag *f, const char *source, 
-	const char *target, int preserve)
+frag_merge_r(const struct frag *f, 
+	const char *source, const char *target)
 {
 	size_t	 i;
 	const char **attp;
@@ -430,7 +404,7 @@ frag_merge_r(const struct frag *f, const char *source,
 		if (0 == strncmp(source, f->val, f->valsz))
 			printf("%s", target);
 		else
-			frag_print(f->val, f->valsz, preserve);
+			printf("%.*s", (int)f->valsz, f->val);
 	} else if (FRAG_NODE == f->type) {
 		printf("<%.*s", (int)f->valsz, f->val);
 		attp = (const char **)f->atts;
@@ -440,16 +414,28 @@ frag_merge_r(const struct frag *f, const char *source,
 	}
 
 	for (i = 0; i < f->childsz; i++)
-		frag_merge_r(f->child[i], source, target, preserve);
+		frag_merge_r(f->child[i], source, target);
 
 	if (FRAG_NODE == f->type)
 		printf("</%.*s>", (int)f->valsz, f->val);
 }
 
 void
-frag_print_merge(const struct frag *root, const char *source, 
-	const char *target, int preserve)
+frag_print_merge(const struct fragseq *q, 
+	const char *source, const char *target)
 {
 
-	frag_merge_r(root, source, target, preserve);
+	assert(NULL != q);
+	frag_merge_r(q->root, source, target);
+}
+
+void
+fragseq_clear(struct fragseq *p)
+{
+
+	frag_node_free(p->root);
+	free(p->copy);
+	p->root = p->cur = NULL;
+	p->copy = NULL;
+	p->copysz = 0;
 }

@@ -172,8 +172,7 @@ static void
 hparse_reset(struct hparse *hp)
 {
 
-	frag_node_free(hp->frag_root);
-	hp->frag_root = hp->frag_current = NULL;
+	fragseq_clear(&hp->frag);
 	while (hp->stacksz > 0)
 		free(hp->stack[--hp->stacksz].name);
 }
@@ -202,7 +201,7 @@ hparse_free(struct hparse *hp)
 	for (i = 0; i < hp->wordsz; i++)
 		free(hp->words[i]);
 
-	frag_node_free(hp->frag_root);
+	fragseq_clear(&hp->frag);
 	free(hp->words);
 	free(hp->lang);
 	free(hp);
@@ -231,7 +230,7 @@ xparse_free(struct xparse *xp)
 		free(xp->xliffs[i].target);
 	}
 
-	frag_node_free(xp->frag_root);
+	fragseq_clear(&xp->frag);
 	free(xp->target);
 	free(xp->source);
 	free(xp->xliffs);
@@ -252,19 +251,17 @@ store(struct hparse *p)
 	int	 reduce = 0;
 
 	assert(POP_EXTRACT == p->op);
-	assert(NULL != p->frag_root);
+	assert(NULL != p->frag.root);
 
-	if (p->frag_root != p->frag_current) {
+	if (p->frag.root != p->frag.cur) {
 		lerr(p->fname, p->p, 
 			"translation scope broken");
 		XML_StopParser(p->p, 0);
 		return 0;
 	}
 
-	cp = frag_serialise(p->frag_root, 
-		p->stack[p->stacksz - 1].preserve, 1, &reduce);
-	frag_node_free(p->frag_root);
-	p->frag_root = p->frag_current = NULL;
+	cp = frag_serialise(&p->frag, 0, 1, &reduce);
+	fragseq_clear(&p->frag);
 
 	if (NULL == cp)
 		return 1;
@@ -300,46 +297,41 @@ translate(struct hparse *hp)
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
 
-	if (hp->frag_root != hp->frag_current) {
+	if (hp->frag.root != hp->frag.cur) {
 		lerr(hp->fname, hp->p, 
 			"translation scope broken");
 		XML_StopParser(hp->p, 0);
 		return 0;
 	}
 
-	cp = frag_serialise(hp->frag_root, 
-		hp->stack[hp->stacksz - 1].preserve, 1, &reduce);
+	cp = frag_serialise(&hp->frag, 0, 1, &reduce);
 
 	if (NULL == cp) {
-		cp = frag_serialise(hp->frag_root, 1, 0, NULL);
-		if (NULL != cp)
-			printf("%s", cp);
-		free(cp);
-		frag_node_free(hp->frag_root);
-		hp->frag_root = hp->frag_current = NULL;
+		if (NULL != hp->frag.copy)
+			printf("%.*s", 
+				(int)hp->frag.copysz, 
+				hp->frag.copy);
+		fragseq_clear(&hp->frag);
 		return 1;
 	}
 
 	for (i = 0; i < hp->xp->xliffsz; i++)
 		if (0 == strcmp(hp->xp->xliffs[i].source, cp)) {
 			if (reduce)
-				frag_print_merge(hp->frag_root,
+				frag_print_merge(&hp->frag,
 					hp->xp->xliffs[i].source,
-					hp->xp->xliffs[i].target,
-					hp->stack[hp->stacksz - 1].preserve);
+					hp->xp->xliffs[i].target);
 			else
 				printf("%s", hp->xp->xliffs[i].target);
 			free(cp);
-			frag_node_free(hp->frag_root);
-			hp->frag_root = hp->frag_current = NULL;
+			fragseq_clear(&hp->frag);
 			return 1;
 		}
 
 	lerr(hp->fname, hp->p, "no translation found");
 	printf("%s", cp);
 	free(cp);
-	frag_node_free(hp->frag_root);
-	hp->frag_root = hp->frag_current = NULL;
+	fragseq_clear(&hp->frag);
 	return 1;
 }
 
@@ -348,8 +340,8 @@ xtext(void *dat, const XML_Char *s, int len)
 {
 	struct xparse	*p = dat;
 
-	frag_node_text(&p->frag_root, 
-		&p->frag_current, s, len);
+	assert(len >= 0);
+	frag_node_text(&p->frag, s, (size_t)len, 1);
 }
 
 static void
@@ -361,7 +353,7 @@ xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 	if (0 == strcmp(s, "target"))
 		++p->nest;
 
-	frag_node_start(&p->frag_root, &p->frag_current, s, atts);
+	frag_node_start(&p->frag, s, atts);
 }
 
 static void
@@ -373,7 +365,7 @@ xnestend(void *dat, const XML_Char *s)
 	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
 
 	if (strcmp(s, rtype) || --p->nest > 0) {
-		frag_node_end(&p->frag_current, s);
+		frag_node_end(&p->frag, s);
 		return;
 	}
 
@@ -382,16 +374,14 @@ xnestend(void *dat, const XML_Char *s)
 
 	if (NEST_TARGET == p->nesttype) {
 		free(p->target);
-		p->target = frag_serialise(p->frag_root, 1, 0, NULL);
-		frag_node_free(p->frag_root);
-		p->frag_root = p->frag_current = NULL;
+		p->target = frag_serialise(&p->frag, 1, 0, NULL);
+		fragseq_clear(&p->frag);
 		if (NULL == p->target)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
-		p->source = frag_serialise(p->frag_root, 1, 0, NULL);
-		frag_node_free(p->frag_root);
-		p->frag_root = p->frag_current = NULL;
+		p->source = frag_serialise(&p->frag, 1, 0, NULL);
+		fragseq_clear(&p->frag);
 		if (NULL == p->source)
 			lerr(p->fname, p->p, "empty <source>");
 	}
@@ -496,8 +486,9 @@ htext(void *dat, const XML_Char *s, int len)
 		return;
 	}
 
-	frag_node_text(&p->frag_root, 
-		&p->frag_current, s, len);
+	assert(len >= 0);
+	frag_node_text(&p->frag, s, (size_t)len,
+		p->stack[p->stacksz - 1].preserve);
 }
 
 /*
@@ -552,8 +543,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			}
 
 	if (phrase) {
-		frag_node_start(&p->frag_root, 
-			&p->frag_current, s, atts);
+		frag_node_start(&p->frag, s, atts);
 		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
 		return;
@@ -561,10 +551,10 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 
 	/* Store/translate any existing keywords. */
 
-	if (NULL != p->frag_root && POP_JOIN == p->op) {
+	if (NULL != p->frag.root && POP_JOIN == p->op) {
 		if ( ! translate(p))
 			return;
-	} else if (NULL != p->frag_root) {
+	} else if (NULL != p->frag.root) {
 		if ( ! store(p))
 			return;
 	}
@@ -708,7 +698,7 @@ hend(void *dat, const XML_Char *s)
 	 */
 
 	if (0 == end && phrase) {
-		frag_node_end(&p->frag_current, s);
+		frag_node_end(&p->frag, s);
 		if (0 == strcmp(p->stack[p->stacksz - 1].name, s))
 			p->stack[p->stacksz - 1].nested--;
 		return;
@@ -720,10 +710,10 @@ hend(void *dat, const XML_Char *s)
 	 * First, flush any existing translatable content.
 	 */
 
-	if (NULL != p->frag_root && POP_JOIN == p->op) {
+	if (NULL != p->frag.root && POP_JOIN == p->op) {
 		if ( ! translate(p))
 			return;
-	} else if (NULL != p->frag_root) {
+	} else if (NULL != p->frag.root) {
 		if ( ! store(p))
 			return;
 	}
