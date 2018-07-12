@@ -28,6 +28,48 @@
 
 #include "extern.h"
 
+static void
+frag_append_text(struct fragseq *q, const XML_Char *s, size_t len)
+{
+
+	q->copy = realloc(q->copy, q->copysz + len);
+	if (NULL == q->copy)
+		err(EXIT_FAILURE, NULL);
+	memcpy(q->copy + q->copysz, s, len);
+	q->copysz += len;
+}
+
+static void
+frag_copy_elem(struct fragseq *q, int null,
+	const XML_Char *s, const XML_Char **atts)
+{
+	const XML_Char	**attp;
+
+	if (NULL == atts && ! null) {
+		frag_append_text(q, "</", 2);
+		frag_append_text(q, s, strlen(s));
+		frag_append_text(q, ">", 1);
+		return;
+	} else if (NULL == atts)
+		return;
+
+	frag_append_text(q, "<", 1);
+	frag_append_text(q, s, strlen(s));
+
+	for (attp = atts; NULL != *attp; attp += 2) {
+		frag_append_text(q, " ", 1);
+		frag_append_text(q, attp[0], strlen(attp[0]));
+		frag_append_text(q, "=\"", 2);
+		frag_append_text(q, attp[1], strlen(attp[1]));
+		frag_append_text(q, "\"", 1);
+	}
+
+	if (null)
+		frag_append_text(q, "/", 1);
+
+	frag_append_text(q, ">", 1);
+}
+
 /* #define DEBUG 1 */
 
 static void
@@ -61,11 +103,13 @@ frag_node_free(struct frag *f)
  */
 void
 frag_node_start(struct fragseq *q,
-	const XML_Char *s, const XML_Char **atts)
+	const XML_Char *s, const XML_Char **atts, int null)
 {
 	struct frag	 *f;
 	size_t		  i = 0;
 	const XML_Char	**attp;
+
+	frag_copy_elem(q, null, s, atts);
 
 	if (NULL == q->root) {
 		assert(NULL == q->cur);
@@ -122,11 +166,7 @@ frag_node_text(struct fragseq *q,
 	struct frag	*f;
 	size_t		 i;
 
-	q->copy = realloc(q->copy, q->copysz + len);
-	if (NULL == q->copy)
-		err(EXIT_FAILURE, NULL);
-	memcpy(q->copy + q->copysz, s, len);
-	q->copysz += len;
+	frag_append_text(q, s, len);
 
 	/* Allocate root, if not existing. */
 
@@ -205,9 +245,10 @@ frag_node_text(struct fragseq *q,
 }
 
 void
-frag_node_end(struct fragseq *q, const XML_Char *s)
+frag_node_end(struct fragseq *q, const XML_Char *s, int null)
 {
 
+	frag_copy_elem(q, null, s, NULL);
 	assert(NULL != q->cur);
 	assert(FRAG_NODE == q->cur->type);
 	assert(0 == strcmp(s, q->cur->val));

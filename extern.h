@@ -129,10 +129,10 @@ int	 join(const char *, XML_Parser, int, char *[]);
 int	 update(const char *, XML_Parser, int, char *[]);
 
 void	 frag_node_start(struct fragseq *, 
-		const XML_Char *, const XML_Char **);
+		const XML_Char *, const XML_Char **, int);
 void	 frag_node_text(struct fragseq *,
 	 	const XML_Char *, size_t, int);
-void	 frag_node_end(struct fragseq *, const XML_Char *);
+void	 frag_node_end(struct fragseq *, const XML_Char *, int);
 char	*frag_serialise(const struct fragseq *, int, int, int *);
 void	 frag_print_merge(const struct fragseq *, 
 		const char *, const char *);

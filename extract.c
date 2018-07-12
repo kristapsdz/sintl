@@ -353,7 +353,7 @@ xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 	if (0 == strcmp(s, "target"))
 		++p->nest;
 
-	frag_node_start(&p->frag, s, atts);
+	frag_node_start(&p->frag, s, atts, xmlvoid(s));
 }
 
 static void
@@ -365,7 +365,7 @@ xnestend(void *dat, const XML_Char *s)
 	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
 
 	if (strcmp(s, rtype) || --p->nest > 0) {
-		frag_node_end(&p->frag, s);
+		frag_node_end(&p->frag, s, xmlvoid(s));
 		return;
 	}
 
@@ -543,7 +543,7 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			}
 
 	if (phrase) {
-		frag_node_start(&p->frag, s, atts);
+		frag_node_start(&p->frag, s, atts, xmlvoid(s));
 		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
 		return;
@@ -698,7 +698,7 @@ hend(void *dat, const XML_Char *s)
 	 */
 
 	if (0 == end && phrase) {
-		frag_node_end(&p->frag, s);
+		frag_node_end(&p->frag, s, xmlvoid(s));
 		if (0 == strcmp(p->stack[p->stacksz - 1].name, s))
 			p->stack[p->stacksz - 1].nested--;
 		return;
