@@ -1,15 +1,18 @@
-<xliff xmlns="urn:oasis:names:tc:xliff:document:2.0" 
- version="2.0" srcLang="en" trgLang="fr">
-	<file id="file1">
-		<unit id="unit1">
-			<segment>
+<xliff version="1.2">
+	<file source-language="en" target-language="fr" tool="sintl">
+		<body>
+			<trans-unit id="1">
 				<source>A test file</source>
 				<target>Un fichier de test</target>
-			</segment>
-			<segment>
-				<source>Hello, <i>world</i>!</source>
+			</trans-unit>
+			<trans-unit id="2">
+				<source>Hello, <i>aworld</i>!</source>
 				<target>Bonjour <i>le monde</i> !</target>
-			</segment>
-		</unit>
+			</trans-unit>
+			<trans-unit id="3">
+				<source>Hello, <i>shworld</i>!</source>
+				<target>Bonjour <i>le monde</i> !</target>
+			</trans-unit>
+		</body>
 	</file>
 </xliff>

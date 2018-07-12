@@ -72,18 +72,21 @@ sandbox(void)
 int
 main(int argc, char *argv[])
 {
-	int		 ch, rc;
+	int		 ch, rc, keep = 0;
 	const char	*xliff = NULL;
 	enum op	 	 op = OP_EXTRACT;
 	XML_Parser	 p;
 
 	sandbox();
 
-	while (-1 != (ch = getopt(argc, argv, "ej:u:")))
+	while (-1 != (ch = getopt(argc, argv, "ej:ku:")))
 		switch (ch) {
 		case ('e'):
 			op = OP_EXTRACT;
 			xliff = NULL;
+			break;
+		case ('k'):
+			keep = 1;
 			break;
 		case ('j'):
 			op = OP_JOIN;
@@ -115,7 +118,7 @@ main(int argc, char *argv[])
 		break;
 	case (OP_UPDATE):
 		assert(NULL != xliff);
-		rc = update(xliff, p, argc, argv);
+		rc = update(xliff, p, keep, argc, argv);
 		break;
 	default:
 		abort();

@@ -24,49 +24,41 @@
 
 #include "extern.h"
 
-#define	XLIFFURN "urn:oasis:names:tc:xliff:document:2.0"
-
 static int
 xcmp(const void *p1, const void *p2)
 {
 	const struct xliff *x1 = p1, *x2 = p2;
 
-	return(strcmp(x1->source, x2->source));
+	return strcmp(x1->source, x2->source);
 }
 
 static int
 cmp(const void *p1, const void *p2)
 {
 
-	return(strcmp(*(const char **)p1, *(const char **)p2));
+	return strcmp(*(const char **)p1, *(const char **)p2);
 }
 
 void
-results_update(struct hparse *hp)
+results_update(struct hparse *hp, int keep)
 {
 	char		*cp;
 	size_t	 	 i, j, ssz, smax;
 	struct xliff	*sorted;
 
 	/* Allows us to de-dupe in place. */
+
 	qsort(hp->words, hp->wordsz, sizeof(char *), cmp);
 
 	sorted = NULL;
 	ssz = smax = 0;
 
-	/*
-	 * Merge found words into the merge buffer.
-	 */
+	/* Merge found words into the merge buffer. */
+
 	for (i = 0; i < hp->wordsz; i++) {
 		cp = hp->words[i];
-		/* De-dupe XML file words. */
 		if (i && 0 == strcmp(cp, hp->words[i - 1]))
 			continue;
-		for (j = 0; j < hp->xp->xliffsz; j++)
-			if (0 == strcmp(cp, hp->xp->xliffs[j].source))
-				break;
-
-		/* Append word to merge buffer. */
 		if (ssz + 1 > smax) {
 			smax = ssz + 512;
 			sorted = reallocarray(sorted, 
@@ -76,58 +68,57 @@ results_update(struct hparse *hp)
 				exit(EXIT_FAILURE);
 			}
 		}
-
-		/* If in the XLIFF, append the source and target. */
+		for (j = 0; j < hp->xp->xliffsz; j++)
+			if (0 == strcmp(cp, hp->xp->xliffs[j].source))
+				break;
 		sorted[ssz].target = j == hp->xp->xliffsz ? 
 			NULL : hp->xp->xliffs[j].target;
 		sorted[ssz++].source = cp;
 	}
 
-	/*
-	 * Merge from the existing XLIFF back into the words.
-	 * TODO: this should have a command-line option, as at this
-	 * point we're keeping things we're no longer translating.
-	 */
-	for (i = 0; i < hp->xp->xliffsz; i++) {
-		cp = hp->xp->xliffs[i].source;
-		for (j = 0; j < hp->wordsz; j++)
-			if (0 == strcmp(cp, hp->words[j]))
-				break;
-		if (j < hp->wordsz)
-			continue;
+	/* Merge from the existing XLIFF back into the words. */
 
-		if (ssz + 1 > smax) {
-			smax = ssz + 512;
-			sorted = reallocarray(sorted, 
-				smax, sizeof(struct xliff));
-			if (NULL == sorted) {
-				perror(NULL);
-				exit(EXIT_FAILURE);
+	if (keep)
+		for (i = 0; i < hp->xp->xliffsz; i++) {
+			cp = hp->xp->xliffs[i].source;
+			for (j = 0; j < hp->wordsz; j++)
+				if (0 == strcmp(cp, hp->words[j]))
+					break;
+			if (j < hp->wordsz)
+				continue;
+			if (ssz + 1 > smax) {
+				smax = ssz + 512;
+				sorted = reallocarray(sorted, 
+					smax, sizeof(struct xliff));
+				if (NULL == sorted) {
+					perror(NULL);
+					exit(EXIT_FAILURE);
+				}
 			}
+			sorted[ssz].target = hp->xp->xliffs[i].target;
+			sorted[ssz++].source = cp;
 		}
-
-		sorted[ssz].target = hp->xp->xliffs[i].target;
-		sorted[ssz++].source = cp;
-	}
 
 	/* Output the sorted dictionary file. */
 	qsort(sorted, ssz, sizeof(struct xliff), xcmp);
 
-	puts("<xliff xmlns=\"" XLIFFURN "\" "
-		"version=\"2.0\" srcLang=\"TODO\" trgLang=\"TODO\">");
-	puts("\t<file id=\"file1\">");
-	puts("\t\t<unit id=\"unit1\">");
-	for (i = 0; i < ssz; i++) {
-		puts("\t\t\t<segment>");
-		printf("\t\t\t\t<source>%s</source>\n", 
-			sorted[i].source);
-		printf("\t\t\t\t<target>%s</target>\n", 
-			NULL == sorted[i].target ? 
-			"TODO" : sorted[i].target);
-		puts("\t\t\t</segment>");
-	}
+	printf("<xliff version=\"1.2\">\n"
+	       "\t<file source-language=\"%s\" "
+	          "target-language=\"%s\" tool=\"sintl\">\n"
+	       "\t\t<body>\n",
+	       NULL == hp->xp->srclang ? "TODO" : hp->xp->srclang,
+	       NULL == hp->xp->trglang ? "TODO" : hp->xp->trglang);
 
-	puts("\t\t</unit>");
+	for (i = 0; i < ssz; i++) 
+		printf("\t\t\t<trans-unit id=\"%zu\">\n"
+		       "\t\t\t\t<source>%s</source>\n"
+		       "\t\t\t\t<target>%s</target>\n"
+		       "\t\t\t</trans-unit>\n",
+		       i + 1, sorted[i].source,
+		       NULL == sorted[i].target ? 
+		       	"TODO" : sorted[i].target);
+
+	puts("\t\t</body>");
 	puts("\t</file>");
 	puts("</xliff>");
 
@@ -137,24 +128,24 @@ results_update(struct hparse *hp)
 void
 results_extract(struct hparse *p)
 {
-	size_t	 i;
+	size_t	 i, j;
 
 	qsort(p->words, p->wordsz, sizeof(char *), cmp);
 
-	printf("<xliff xmlns=\"" XLIFFURN "\" "
-		"version=\"2.0\" srcLang=\"%s\" trgLang=\"TODO\">\n",
-		NULL == p->lang ? "TODO" : p->lang);
-	puts("\t<file id=\"file1\">");
-	puts("\t\t<unit id=\"unit1\">");
-	for (i = 0; i < p->wordsz; i++) {
+	printf("<xliff version=\"1.2\">\n"
+	       "\t<file source-language=\"%s\" "
+	          "target-language=\"TODO\" tool=\"sintl\">\n"
+	       "\t\t<body>\n",
+	       NULL == p->lang ? "TODO" : p->lang);
+	for (i = j = 0; i < p->wordsz; i++) {
 		if (i && 0 == strcmp(p->words[i], p->words[i - 1]))
 			continue;
-		puts("\t\t\t<segment>");
+		printf("\t\t\t<trans-unit id=\"%zu\">\n", ++j);
 		printf("\t\t\t\t<source>%s</source>\n", p->words[i]);
 		puts("\t\t\t\t<target>TODO</target>");
-		puts("\t\t\t</segment>");
+		puts("\t\t\t</trans-unit>");
 	}
-	puts("\t\t</unit>");
+	puts("\t\t</body>");
 	puts("\t</file>");
 	puts("</xliff>");
 }

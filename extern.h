@@ -126,7 +126,7 @@ __BEGIN_DECLS
 
 int	 extract(XML_Parser, int, char *[]);
 int	 join(const char *, XML_Parser, int, char *[]);
-int	 update(const char *, XML_Parser, int, char *[]);
+int	 update(const char *, XML_Parser, int, int, char *[]);
 
 void	 frag_node_start(struct fragseq *, 
 		const XML_Char *, const XML_Char **, int);
@@ -139,7 +139,7 @@ void	 frag_print_merge(const struct fragseq *,
 void	 fragseq_clear(struct fragseq *);
 
 void	 results_extract(struct hparse *);
-void	 results_update(struct hparse *);
+void	 results_update(struct hparse *, int);
 
 __END_DECLS
 

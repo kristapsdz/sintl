@@ -397,18 +397,35 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
 	struct xparse	 *p = dat;
 	const XML_Char	**attp;
+	const char	 *ver;
 
 	if (0 == strcmp(s, "xliff")) {
-		free(p->srclang);
-		free(p->trglang);
-		p->srclang = p->trglang = NULL;
+		ver = NULL;
+		for (attp = atts; NULL != *attp; attp += 2) 
+			if (0 == strcmp(attp[0], "version"))
+				ver = attp[1];
+		if (NULL == ver) {
+			lerr(p->fname, p->p, "<xliff> without version");
+			XML_StopParser(p->p, 0);
+			return;
+		} else if (strcmp(ver, "1.2")) {
+			lerr(p->fname, p->p, "<xliff> version must be 1.2");
+			XML_StopParser(p->p, 0);
+			return;
+		}
+	} else if (0 == strcmp(s, "file")) {
+		if (NULL != p->srclang || NULL != p->trglang) {
+			lerr(p->fname, p->p, "<file> already invoked");
+			XML_StopParser(p->p, 0);
+			return;
+		}
 		for (attp = atts; NULL != *attp; attp += 2)
-			if (0 == strcmp(attp[0], "srcLang")) {
+			if (0 == strcmp(attp[0], "source-language")) {
 				free(p->srclang);
 				p->srclang = strdup(attp[1]);
 				if (NULL == p->srclang)
 					err(EXIT_FAILURE, NULL);
-			} else if (0 == strcmp(attp[0], "trgLang")) {
+			} else if (0 == strcmp(attp[0], "target-language")) {
 				free(p->trglang);
 				p->trglang = strdup(attp[1]);
 				if (NULL == p->trglang)
@@ -424,7 +441,7 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 		p->nesttype = NEST_TARGET;
 		XML_SetDefaultHandlerExpand(p->p, xtext);
 		XML_SetElementHandler(p->p, xneststart, xnestend);
-	} else if (0 == strcmp(s, "segment"))
+	} else if (0 == strcmp(s, "trans-unit"))
 		p->source = p->target = NULL;
 }
 
@@ -442,7 +459,7 @@ xend(void *dat, const XML_Char *s)
 
 	XML_SetDefaultHandlerExpand(p->p, NULL);
 
-	if (0 == strcmp(s, "segment")) {
+	if (0 == strcmp(s, "trans-unit")) {
 		if (NULL == p->source || NULL == p->target) {
 			lerr(p->fname, p->p, "no <source> or <target>");
 			free(p->source);
@@ -913,7 +930,7 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
  * argv, outputting the merged XLIFF file.
  */
 int
-update(const char *xliff, XML_Parser p, int argc, char *argv[])
+update(const char *xliff, XML_Parser p, int keep, int argc, char *argv[])
 {
 	struct xparse	*xp;
 	struct hparse	*hp;
@@ -938,7 +955,7 @@ update(const char *xliff, XML_Parser p, int argc, char *argv[])
 		hp = hparse_alloc(p, POP_EXTRACT);
 		hp->xp = xp;
 		if (0 != (rc = scanner(hp, argc, argv)))
-			results_update(hp);
+			results_update(hp, keep);
 		hparse_free(hp);
 	} else
 		perr(xliff, p);
