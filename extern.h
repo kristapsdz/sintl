@@ -66,11 +66,14 @@ struct	frag {
 	struct frag	 *parent; /* parent (NULL if root) */
 };
 
+/*
+ * Sequence of fragments.
+ */
 struct	fragseq {
-	struct frag	*root;
-	struct frag	*cur;
-	char		*copy;
-	size_t		 copysz;
+	struct frag	*root; /* root of fragment tree */
+	struct frag	*cur; /* current node in fragment parse */
+	char		*copy; /* verbatim copy of all text */
+	size_t		 copysz; /* length of copy */
 };
 
 /*
@@ -125,7 +128,6 @@ int	 extract(XML_Parser, int, char *[]);
 int	 join(const char *, XML_Parser, int, char *[]);
 int	 update(const char *, XML_Parser, int, char *[]);
 
-void 	 frag_node_free(struct frag *);
 void	 frag_node_start(struct fragseq *, 
 		const XML_Char *, const XML_Char **);
 void	 frag_node_text(struct fragseq *,

@@ -30,7 +30,7 @@
 
 /* #define DEBUG 1 */
 
-void
+static void
 frag_node_free(struct frag *f)
 {
 	size_t	  i;
@@ -367,6 +367,7 @@ frag_serialise(const struct fragseq *q,
 			else
 				abort();
 		}
+
 		if (NULL != ff) {
 			f = ff;
 			*reduce = 1;
