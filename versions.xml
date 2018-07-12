@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- vim: set tw=100: -->
 <articles>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
+			<h1>0.2.2</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2018-07-12">2018-07-12</time>
+		</header>
+		<aside>
+			Handle space preservation during the parse itself, not afterward.
+			This will (in the future) handle <code>xml:space</code> attributes in
+			embedded phrasing content.
+		</aside>
+	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
 			<h1>0.2.1</h1>
