@@ -260,7 +260,7 @@ store(struct hparse *p)
 		return 0;
 	}
 
-	cp = frag_serialise(&p->frag, 0, 1, &reduce);
+	cp = frag_serialise(&p->frag, 1, &reduce);
 	fragseq_clear(&p->frag);
 
 	if (NULL == cp)
@@ -304,7 +304,7 @@ translate(struct hparse *hp)
 		return 0;
 	}
 
-	cp = frag_serialise(&hp->frag, 0, 1, &reduce);
+	cp = frag_serialise(&hp->frag, 1, &reduce);
 
 	if (NULL == cp) {
 		if (NULL != hp->frag.copy)
@@ -374,13 +374,13 @@ xnestend(void *dat, const XML_Char *s)
 
 	if (NEST_TARGET == p->nesttype) {
 		free(p->target);
-		p->target = frag_serialise(&p->frag, 1, 0, NULL);
+		p->target = frag_serialise(&p->frag, 0, NULL);
 		fragseq_clear(&p->frag);
 		if (NULL == p->target)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
-		p->source = frag_serialise(&p->frag, 1, 0, NULL);
+		p->source = frag_serialise(&p->frag, 0, NULL);
 		fragseq_clear(&p->frag);
 		if (NULL == p->source)
 			lerr(p->fname, p->p, "empty <source>");
@@ -805,6 +805,9 @@ map_close(int fd, void *map, size_t mapsz)
 static int
 dofile(struct hparse *hp, const char *map, size_t mapsz)
 {
+	char 	 b[4096];
+	ssize_t	 sz;
+	int 	 rc = XML_STATUS_OK;
 
 	XML_ParserReset(hp->p, NULL);
 	XML_SetDefaultHandlerExpand(hp->p, htext);
@@ -812,10 +815,6 @@ dofile(struct hparse *hp, const char *map, size_t mapsz)
 	XML_SetUserData(hp->p, hp);
 
 	if (NULL == map) {
-		char b[4096];
-		ssize_t sz;
-		int rc = XML_STATUS_OK;
-
 		do {
 			sz = read(STDIN_FILENO, b, sizeof(b));
 			if (sz < 0) {
@@ -828,14 +827,14 @@ dofile(struct hparse *hp, const char *map, size_t mapsz)
 		if (XML_STATUS_OK != rc)
 			perr(hp->fname, hp->p);
 		if (XML_STATUS_OK == rc && 0 == sz)
-			return(1);
+			return 1;
 	} else {
 		if (XML_STATUS_OK == XML_Parse(hp->p, map, mapsz, 1))
-			return(1);
+			return 1;
 		perr(hp->fname, hp->p);
 	}
 
-	return(0);
+	return 0;
 }
 
 /*

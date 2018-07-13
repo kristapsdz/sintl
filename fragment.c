@@ -70,8 +70,6 @@ frag_copy_elem(struct fragseq *q, int null,
 	frag_append_text(q, ">", 1);
 }
 
-/* #define DEBUG 1 */
-
 static void
 frag_node_free(struct frag *f)
 {
@@ -257,7 +255,8 @@ frag_node_end(struct fragseq *q, const XML_Char *s, int null)
 }
 
 static void
-append(char **buf, size_t *sz, size_t *max, const XML_Char *s, size_t len)
+frag_append(char **buf, size_t *sz, 
+	size_t *max, const XML_Char *s, size_t len)
 {
 
 	if (NULL == s || 0 == len)
@@ -275,6 +274,9 @@ append(char **buf, size_t *sz, size_t *max, const XML_Char *s, size_t len)
 	(*buf)[*sz] = '\0';
 }
 
+/*
+ * Recursively serialise "f" into the dynamic buffer.
+ */
 static void
 frag_serialise_r(const struct frag *f, 
 	char **buf, size_t *sz, size_t *max)
@@ -285,50 +287,61 @@ frag_serialise_r(const struct frag *f,
 	assert(NULL != f);
 
 	if (FRAG_NODE == f->type) {
-		append(buf, sz, max, "<", 1);
-		append(buf, sz, max, f->val, f->valsz);
+		frag_append(buf, sz, max, "<", 1);
+		frag_append(buf, sz, max, f->val, f->valsz);
 		attp = (const char **)f->atts;
 		for ( ; NULL != *attp; attp += 2) {
-			append(buf, sz, max, " ", 1);
-			append(buf, sz, max, attp[0], strlen(attp[0]));
-			append(buf, sz, max, "=\"", 2);
-			append(buf, sz, max, attp[1], strlen(attp[1]));
-			append(buf, sz, max, "\"", 1);
+			frag_append(buf, sz, max, " ", 1);
+			frag_append(buf, sz, max, 
+				attp[0], strlen(attp[0]));
+			frag_append(buf, sz, max, "=\"", 2);
+			frag_append(buf, sz, max, 
+				attp[1], strlen(attp[1]));
+			frag_append(buf, sz, max, "\"", 1);
 		}
-		append(buf, sz, max, ">", 1);
+		frag_append(buf, sz, max, ">", 1);
 	} else if (FRAG_TEXT == f->type)
-		append(buf, sz, max, f->val, f->valsz);
+		frag_append(buf, sz, max, f->val, f->valsz);
 
 	for (i = 0; i < f->childsz; i++)
 		frag_serialise_r(f->child[i], buf, sz, max);
 
 	if (FRAG_NODE == f->type && f->node_closed) {
-		append(buf, sz, max, "</", 2);
-		append(buf, sz, max, f->val, f->valsz);
-		append(buf, sz, max, ">", 1);
+		frag_append(buf, sz, max, "</", 2);
+		frag_append(buf, sz, max, f->val, f->valsz);
+		frag_append(buf, sz, max, ">", 1);
 	}
 }
 
+/*
+ * If "minimise", then ignore empty nodes.
+ * Empty nodes are things like <img />, optionally surrounded by space.
+ * If "reduce" is non-NULL, then strip away surrounding material to get
+ * to translatable content.
+ * If any stripping occurs, set "reduce" to be non-zero.
+ */
 char *
-frag_serialise(const struct fragseq *q, 
-	int keepempty, int minimise, int *reduce)
+frag_serialise(const struct fragseq *q, int minimise, int *reduce)
 {
-	size_t	 i, sz = 0, max = 0, nt, nn;
+	size_t	 i, sz = 0, max = 0, nt, nn, nsz;
 	char	*buf = NULL;
 	const struct frag *ff, *f;
 
 	if (NULL == q || NULL == (f = q->root))
 		return NULL;
 
-	if (minimise) {
-		/*
-		 * First pass of minimisation: remove all fragments that
-		 * are simply whitespace and empty nodes.
-		 */
+	/*
+	 * Minimisation pass: return NULL if we encounter standalone
+	 * nodes, with or without surrounding whitespace.
+	 * For example, " <b><img /></b> ".
+	 * TODO: this should be a bottom-up accumulation of non-space
+	 * text content count.
+	 */
 
-		ff = f;
-		while (NULL != ff) {
-			nn = nt = 0;
+	if (minimise)
+		for (ff = f; NULL != ff; ) {
+			if (0 == ff->childsz)
+				return NULL;
 
 			/* Only whitespace? */
 
@@ -337,15 +350,15 @@ frag_serialise(const struct fragseq *q,
 			    0 == ff->child[0]->has_nonws)
 				return NULL;
 
-			/* Count all nodes/whitespace. */
+			/* Count number of text/nodes in children. */
 
-			for (i = 0; i < ff->childsz; i++) {
+			for (nn = nt = i = 0; i < ff->childsz; i++) {
 				nn += FRAG_NODE == ff->child[i]->type;
 				nt += FRAG_TEXT == ff->child[i]->type &&
 					0 == ff->child[i]->has_nonws;
 			}
 
-			/* Only node/whitespace? */
+			/* Stop if not one node and whitespace. */
 
 			if (1 != nn || nn + nt != ff->childsz) {
 				ff = NULL;
@@ -362,92 +375,123 @@ frag_serialise(const struct fragseq *q,
 				ff = ff->child[2];
 			else
 				abort();
-
-			if (0 == ff->childsz)
-				return NULL;
 		}
-	}
+
+	/*
+	 * Reduction: top-down, strip away superfluous elements in our
+	 * fragment tree.  
+	 * This is limited to surrounding empty elements, possibly
+	 * buffered with white-space.
+	 * For example, " <b>foo</b> " -> "foo".
+	 * For example, " <b><i>foo</i> <i>bar</i></b> " -> "<i>foo</i>
+	 * <i>bar</i>".
+	 */
 
 	if (NULL != reduce) {
-		ff = f;
-		while (NULL != ff) {
-			nn = nt = 0;
+		for (ff = f; NULL != ff; ) {
+			assert(ff->childsz);
 
-			/* Only whitespace?  Great. */
+			/* Only child is text: send to output. */
 
 			if (1 == ff->childsz &&
 			    FRAG_TEXT == ff->child[0]->type &&
 			    ff->child[0]->has_nonws) {
-				ff = ff->child[0];
+				frag_serialise_r
+					(ff->child[0], 
+					 &buf, &sz, &max);
+				*reduce = f != ff;
 				break;
 			}
 
-			/* Count all nodes/whitespace. */
+			/*
+			 * If just a single node w/whitespace buffering,
+			 * recurse into the node.
+			 * Otherwise, trim surrounding white-space and
+			 * send remaining parts into the output.
+			 */
 
-			for (i = 0; i < ff->childsz; i++) {
+			for (nn = nt = i = 0; i < ff->childsz; i++) {
 				nn += FRAG_NODE == ff->child[i]->type;
 				nt += FRAG_TEXT == ff->child[i]->type &&
 					0 == ff->child[i]->has_nonws;
 			}
 
-			/* Only node/whitespace? */
-
-			if (1 != nn || nn + nt != ff->childsz) {
-				ff = NULL;
-				break;
+			if (1 == nn && nn + nt == ff->childsz) {
+				if (FRAG_NODE == ff->child[0]->type) 
+					ff = ff->child[0];
+				else if (FRAG_NODE == ff->child[1]->type) 
+					ff = ff->child[1];
+				else if (FRAG_NODE == ff->child[2]->type) 
+					ff = ff->child[2];
+				else
+					abort();
+				continue;
 			}
 
-			/* Descend into node. */
+			nsz = ff->childsz;
+			assert(nsz);
 
-			if (FRAG_NODE == ff->child[0]->type) 
-				ff = ff->child[0];
-			else if (FRAG_NODE == ff->child[1]->type) 
-				ff = ff->child[1];
-			else if (FRAG_NODE == ff->child[2]->type) 
-				ff = ff->child[2];
-			else
-				abort();
+			for (nsz = ff->childsz; nsz > 0; nsz--)
+				if (FRAG_TEXT != ff->child[nsz - 1]->type ||
+				    ff->child[nsz - 1]->has_nonws)
+					break;
+			for (i = 0; i < nsz; i++)
+				if (FRAG_TEXT != ff->child[i]->type ||
+				    ff->child[i]->has_nonws)
+					break;
+			for ( ; i < nsz; i++)
+				frag_serialise_r
+					(ff->child[i], 
+					 &buf, &sz, &max);
+
+			*reduce = f != ff;
+			break;
 		}
 
-		if (NULL != ff) {
-			f = ff;
+		/* 
+		 * Trim spacing in the output.
+		 * This happens for (1) singleton text reduced children
+		 * and (2) text and node series.
+		 */
+
+		for (i = 0; i < sz; i++)
+			if ( ! isspace((unsigned char)buf[i]))
+				break;
+
+		if (i < sz) {
+			memmove(buf, &buf[i], sz - i);
+			sz -= i;
+			buf[sz] = '\0';
+			for ( ; sz > 0; sz--) {
+				if ( ! isspace((unsigned char)buf[sz - 1]))
+					break;
+				buf[sz - 1] = '\0';
+			}
 			*reduce = 1;
-		}
-	}
+		} else if (i == sz)
+			sz = 0;
+	} else
+		frag_serialise_r(f, &buf, &sz, &max);
 
-	frag_serialise_r(f, &buf, &sz, &max);
+	/* This is set if it's just whitespace. */
 
 	if (0 == sz) {
 		free(buf);
 		return NULL;
-	} else if (keepempty)
-		return buf;
-
-	for (i = 0; i < sz; i++)
-		if ( ! isspace((unsigned char)buf[i]))
-			break;
-
-	if (i == sz) {
-		free(buf);
-		return NULL;
-	}
+	} 
 
 	return buf;
 }
 
 static void
-frag_merge_r(const struct frag *f, 
+frag_print_merge_r(const struct frag *f,
 	const char *source, const char *target)
 {
-	size_t	 i;
-	const char **attp;
+	size_t	 	  i, nn = 0, nt = 0, sz;
+	const char 	**attp;
+	const char	 *cp;
 
-	if (FRAG_TEXT == f->type) {
-		if (0 == strncmp(source, f->val, f->valsz))
-			printf("%s", target);
-		else
-			printf("%.*s", (int)f->valsz, f->val);
-	} else if (FRAG_NODE == f->type) {
+	if (FRAG_NODE == f->type) {
 		printf("<%.*s", (int)f->valsz, f->val);
 		attp = (const char **)f->atts;
 		for ( ; NULL != *attp; attp += 2)
@@ -455,22 +499,108 @@ frag_merge_r(const struct frag *f,
 		putchar('>');
 	}
 
-	for (i = 0; i < f->childsz; i++)
-		frag_merge_r(f->child[i], source, target);
+	/* 
+	 * Only text: the algorithm is complete.
+	 * Make sure we account for surrounding white-space.
+	 */
 
+	if (1 == f->childsz &&
+	    FRAG_TEXT == f->child[0]->type &&
+	    f->child[0]->has_nonws) {
+		cp = f->child[0]->val;
+		sz = f->child[0]->valsz;
+		if (sz && isspace((unsigned char)cp[0]))
+			putchar(' ');
+		printf("%s", target);
+		if (sz && isspace((unsigned char)cp[sz - 1]))
+			putchar(' ');
+		goto out;
+	}
+
+	/* See if we're going to recursively step. */
+
+	for (i = 0; i < f->childsz; i++) {
+		nn += FRAG_NODE == f->child[i]->type;
+		nt += FRAG_TEXT == f->child[i]->type &&
+			0 == f->child[i]->has_nonws;
+	}
+
+	/* 
+	 * The algorithm is complete.
+	 * Make sure we account for surrounding white-space.
+	 */
+
+	if (1 != nn || nn + nt != f->childsz) {
+		for (i = 0; i < f->childsz; i++)  {
+			if (FRAG_TEXT != f->child[i]->type ||
+			    f->child[i]->has_nonws)
+				break;
+			printf("%.*s", (int)f->child[i]->valsz, 
+				f->child[i]->val);
+		}
+
+		if (i < f->childsz &&
+	  	    FRAG_TEXT == f->child[i]->type &&
+		    f->child[i]->valsz &&
+		    f->child[i]->has_nonws &&
+		    isspace((unsigned char)f->child[i]->val[0]))
+			putchar(' ');
+
+		printf("%s", target);
+
+		for (i = f->childsz; i > 0; i--)  {
+			if (FRAG_TEXT != f->child[i - 1]->type ||
+			    f->child[i - 1]->has_nonws)
+				break;
+			printf("%.*s", (int)f->child[i - 1]->valsz, 
+				f->child[i - 1]->val);
+		}
+
+		if (i > 0 &&
+	  	    FRAG_TEXT == f->child[i - 1]->type &&
+		    f->child[i - 1]->valsz &&
+		    f->child[i - 1]->has_nonws) {
+			cp = f->child[i - 1]->val;
+			sz = f->child[i - 1]->valsz;
+			if (isspace((unsigned char)cp[sz - 1]))
+				putchar(' ');
+		}
+		goto out;
+	}
+
+	/* Descend into node. */
+
+	for (i = 0; i < f->childsz; i++)
+		if (FRAG_NODE == f->child[i]->type)
+			frag_print_merge_r
+				(f->child[i], source, target);
+		else
+			printf("%.*s", (int)f->child[i]->valsz,
+				f->child[i]->val);
+
+out:
 	if (FRAG_NODE == f->type)
 		printf("</%.*s>", (int)f->valsz, f->val);
 }
 
+/*
+ * Take a fragment "q" and a "source" that matches into some part of the
+ * post-reduced "q".
+ * Find the "source" in "q" by reversing the reduction and emitting the
+ * "target" instead.
+ * This should ONLY be run on reduced trees.
+ */
 void
 frag_print_merge(const struct fragseq *q, 
 	const char *source, const char *target)
 {
 
-	assert(NULL != q);
-	frag_merge_r(q->root, source, target);
+	frag_print_merge_r(q->root, source, target);
 }
 
+/*
+ * Clear "p", but do not free() it.
+ */
 void
 fragseq_clear(struct fragseq *p)
 {

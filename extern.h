@@ -133,7 +133,7 @@ void	 frag_node_start(struct fragseq *,
 void	 frag_node_text(struct fragseq *,
 	 	const XML_Char *, size_t, int);
 void	 frag_node_end(struct fragseq *, const XML_Char *, int);
-char	*frag_serialise(const struct fragseq *, int, int, int *);
+char	*frag_serialise(const struct fragseq *, int, int *);
 void	 frag_print_merge(const struct fragseq *, 
 		const char *, const char *);
 void	 fragseq_clear(struct fragseq *);
