@@ -22,7 +22,7 @@
 .Nd simple internationalisation utility
 .Sh SYNOPSIS
 .Nm sintl
-.Op Fl e
+.Op Fl ek
 .Op Fl j Ar file
 .Op Fl u Ar file
 .Ar
@@ -51,6 +51,10 @@ Translate
 input files using the XLIFF
 .Ar file ,
 emitting translated HTML5 on standard output.
+.It Fl k
+When updating the XLIFF file, keep entries that are no longer valid.
+Ignored unless specified with
+.Fl u .
 .It Fl u Ar file
 Update the XLIFF
 .Ar file
@@ -149,19 +153,18 @@ We can then create an initial XLIFF file as follows.
 .Pp
 Now edit the XLIFF file.
 .Bd -literal
-<xliff xmlns="urn:oasis:names:tc:xliff:document:2.0"
- version="2.0" srcLang="TODO" trgLang="en">
-    <file id="file1">
-        <unit id="unit1">
-          <segment>
-              <source>title</source>
-              <target>Title</target>
-          </segment>
-          <segment>
-              <source>message</source>
-              <target>Hello, World!</target>
-          </segment>
-        </unit>
+<xliff version="1.2">
+    <file source-language="TODO" target-language="en">
+        <body>
+            <trans-unit id="unit1">
+                <source>title</source>
+                <target>Title</target>
+            </trans-unit>
+            <trans-unit id="2">
+                <source>message</source>
+                <target>Hello, World!</target>
+            </trans-unit>
+        </body>
     </file>
 </xliff>
 .Ed
@@ -171,7 +174,7 @@ If the
 attribute were specified on the input
 .Li <html>
 root element, it would have been propogated in the
-.Li srcLang
+.Li source-language
 atttribute.
 It defaults to
 .Li TODO .
@@ -186,7 +189,7 @@ identifiers, not content.
 .Sh STANDARDS
 HTML5 files to translate must be valid XML-form HTML5 documents
 annotated with a subset of the W3C ITS v2.0 attributes.
-Files holding translation dictionaries must be valid XLIFF 2.0 files.
+Files holding translation dictionaries must be valid XLIFF 1.2 files.
 .Sh AUTHORS
 The
 .Nm

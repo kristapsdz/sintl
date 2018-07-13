@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
 
 usage:
-	fprintf(stderr, "usage: %s [-e] "
+	fprintf(stderr, "usage: %s [-ek] "
 		"[-j xliff] [-u xliff] html5...\n", getprogname());
 	return(EXIT_FAILURE);
 }
