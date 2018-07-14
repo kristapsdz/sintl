@@ -3,6 +3,20 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
+			<h1>0.2.3</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2018-07-14">2018-07-14</time>
+		</header>
+		<aside>
+			Revert to using XLIFF 1.2 after realising that most tools to handle the
+			newest XLIFF standard version.
+			Have <b>-u</b> mode not keep old translations by default.
+			Add <b>-k</b> to keep old translations when updating.
+			Continue working on reducing translatable fragments.
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
 			<h1>0.2.2</h1>
 			<address>Kristaps Dzonsons</address>
 			<time datetime="2018-07-12">2018-07-12</time>

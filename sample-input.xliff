@@ -6,11 +6,7 @@
 				<target>Un fichier de test</target>
 			</trans-unit>
 			<trans-unit id="2">
-				<source>Hello, <i>aworld</i>!</source>
-				<target>Bonjour <i>le monde</i> !</target>
-			</trans-unit>
-			<trans-unit id="3">
-				<source>Hello, <i>shworld</i>!</source>
+				<source>Hello, <i>world</i>!</source>
 				<target>Bonjour <i>le monde</i> !</target>
 			</trans-unit>
 		</body>
