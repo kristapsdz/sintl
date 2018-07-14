@@ -58,6 +58,7 @@ struct	frag {
 	size_t		  valsz; /* string length of valsz */
 	int		  node_closed; /* if node, whether closed */
 	int		  has_nonws; /* if text, whether has non-ws */
+	int		  is_null; /* if node, whether is null */
 	char		**atts; /* if node, attributes */
 	enum fragtype	  type; /* type of node */
 	struct frag	**child; /* array of child nodes */
@@ -132,7 +133,7 @@ void	 frag_node_start(struct fragseq *,
 		const XML_Char *, const XML_Char **, int);
 void	 frag_node_text(struct fragseq *,
 	 	const XML_Char *, size_t, int);
-void	 frag_node_end(struct fragseq *, const XML_Char *, int);
+void	 frag_node_end(struct fragseq *, const XML_Char *);
 char	*frag_serialise(const struct fragseq *, int, int *);
 void	 frag_print_merge(const struct fragseq *, 
 		const char *, const char *);

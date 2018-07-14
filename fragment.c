@@ -128,6 +128,7 @@ frag_node_start(struct fragseq *q,
 	if (NULL == f)
 		err(EXIT_FAILURE, NULL);
 
+	f->is_null = null;
 	f->type = FRAG_NODE;
 	f->val = strdup(s);
 	f->valsz = strlen(f->val);
@@ -243,13 +244,14 @@ frag_node_text(struct fragseq *q,
 }
 
 void
-frag_node_end(struct fragseq *q, const XML_Char *s, int null)
+frag_node_end(struct fragseq *q, const XML_Char *s)
 {
 
-	frag_copy_elem(q, null, s, NULL);
 	assert(NULL != q->cur);
 	assert(FRAG_NODE == q->cur->type);
 	assert(0 == strcmp(s, q->cur->val));
+
+	frag_copy_elem(q, q->cur->is_null, s, NULL);
 	q->cur->node_closed = 1;
 	q->cur = q->cur->parent;
 }
@@ -299,6 +301,8 @@ frag_serialise_r(const struct frag *f,
 				attp[1], strlen(attp[1]));
 			frag_append(buf, sz, max, "\"", 1);
 		}
+		if (f->is_null)
+			frag_append(buf, sz, max, "/", 1);
 		frag_append(buf, sz, max, ">", 1);
 	} else if (FRAG_TEXT == f->type)
 		frag_append(buf, sz, max, f->val, f->valsz);
@@ -306,11 +310,19 @@ frag_serialise_r(const struct frag *f,
 	for (i = 0; i < f->childsz; i++)
 		frag_serialise_r(f->child[i], buf, sz, max);
 
-	if (FRAG_NODE == f->type && f->node_closed) {
+	if (FRAG_NODE == f->type && f->node_closed && ! f->is_null) {
 		frag_append(buf, sz, max, "</", 2);
 		frag_append(buf, sz, max, f->val, f->valsz);
 		frag_append(buf, sz, max, ">", 1);
 	}
+}
+
+static int
+frag_canreduce(const struct frag *f)
+{
+
+	return (FRAG_TEXT == f->type && 0 == f->has_nonws) ||
+	       (FRAG_NODE == f->type && 0 == f->childsz);
 }
 
 /*
@@ -432,12 +444,10 @@ frag_serialise(const struct fragseq *q, int minimise, int *reduce)
 			assert(nsz);
 
 			for (nsz = ff->childsz; nsz > 0; nsz--)
-				if (FRAG_TEXT != ff->child[nsz - 1]->type ||
-				    ff->child[nsz - 1]->has_nonws)
+				if ( ! frag_canreduce(ff->child[nsz - 1]))
 					break;
 			for (i = 0; i < nsz; i++)
-				if (FRAG_TEXT != ff->child[i]->type ||
-				    ff->child[i]->has_nonws)
+				if ( ! frag_canreduce(ff->child[i]))
 					break;
 			for ( ; i < nsz; i++)
 				frag_serialise_r
@@ -484,6 +494,35 @@ frag_serialise(const struct fragseq *q, int minimise, int *reduce)
 }
 
 static void
+frag_print_reduced(const struct frag *f)
+{
+	const char	**attp;
+
+	if (FRAG_TEXT == f->type) {
+		assert(f->val);
+		printf("%.*s", (int)f->valsz, f->val);
+		return;
+	}
+
+	assert(FRAG_NODE == f->type);
+	assert(f->childsz < 2);
+
+	printf("<%.*s", (int)f->valsz, f->val);
+	attp = (const char **)f->atts;
+	for ( ; NULL != *attp; attp += 2)
+		printf(" %s=\"%s\"", attp[0], attp[1]);
+	if (f->is_null)
+		putchar('/');
+	putchar('>');
+	if (f->childsz) {
+		assert( ! f->is_null);
+		frag_print_reduced(f->child[0]);
+	}
+	if ( ! f->is_null)
+		printf("</%.*s>", (int)f->valsz, f->val);
+}
+
+static void
 frag_print_merge_r(const struct frag *f,
 	const char *source, const char *target)
 {
@@ -496,7 +535,13 @@ frag_print_merge_r(const struct frag *f,
 		attp = (const char **)f->atts;
 		for ( ; NULL != *attp; attp += 2)
 			printf(" %s=\"%s\"", attp[0], attp[1]);
+		if (f->is_null) {
+			putchar('/');
+			assert(0 == f->childsz);
+		}
 		putchar('>');
+		if (f->is_null) 
+			return;
 	}
 
 	/* 
@@ -532,11 +577,9 @@ frag_print_merge_r(const struct frag *f,
 
 	if (1 != nn || nn + nt != f->childsz) {
 		for (i = 0; i < f->childsz; i++)  {
-			if (FRAG_TEXT != f->child[i]->type ||
-			    f->child[i]->has_nonws)
+			if ( ! frag_canreduce(f->child[i]))
 				break;
-			printf("%.*s", (int)f->child[i]->valsz, 
-				f->child[i]->val);
+			frag_print_reduced(f->child[i]);
 		}
 
 		if (i < f->childsz &&
@@ -549,11 +592,9 @@ frag_print_merge_r(const struct frag *f,
 		printf("%s", target);
 
 		for (i = f->childsz; i > 0; i--)  {
-			if (FRAG_TEXT != f->child[i - 1]->type ||
-			    f->child[i - 1]->has_nonws)
+			if ( ! frag_canreduce(f->child[i - 1]))
 				break;
-			printf("%.*s", (int)f->child[i - 1]->valsz, 
-				f->child[i - 1]->val);
+			frag_print_reduced(f->child[i - 1]);
 		}
 
 		if (i > 0 &&
