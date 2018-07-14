@@ -340,6 +340,15 @@ xtext(void *dat, const XML_Char *s, int len)
 {
 	struct xparse	*p = dat;
 
+	if (NULL != p->frag.cur &&
+	    FRAG_NODE == p->frag.cur->type &&
+	    p->frag.cur->is_null) {
+		lerr(p->fname, p->p, "content "
+			"within null element");
+		XML_StopParser(p->p, 0);
+		return;
+	}
+
 	assert(len >= 0);
 	frag_node_text(&p->frag, s, (size_t)len, 1);
 }
@@ -347,11 +356,24 @@ xtext(void *dat, const XML_Char *s, int len)
 static void
 xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
-	struct xparse	 *p = dat;
+	struct xparse	*p = dat;
+	const char	*rtype;
 
-	/* FIXME */
-	if (0 == strcmp(s, "target"))
+	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
+
+	/* This is an XML file, so it's case sensitive. */
+
+	if (0 == strcmp(s, rtype))
 		++p->nest;
+
+	if (NULL != p->frag.cur &&
+	    FRAG_NODE == p->frag.cur->type &&
+	    p->frag.cur->is_null) {
+		lerr(p->fname, p->p, "content "
+			"within null element");
+		XML_StopParser(p->p, 0);
+		return;
+	}
 
 	frag_node_start(&p->frag, s, atts, xmlvoid(s));
 }
@@ -363,6 +385,8 @@ xnestend(void *dat, const XML_Char *s)
 	const char	*rtype;
 
 	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
+
+	/* This is an XML file, so it's case sensitive. */
 
 	if (strcmp(s, rtype) || --p->nest > 0) {
 		frag_node_end(&p->frag, s);
@@ -495,6 +519,14 @@ static void
 htext(void *dat, const XML_Char *s, int len)
 {
 	struct hparse	*p = dat;
+
+	if (NULL != p->frag.cur &&
+	    FRAG_NODE == p->frag.cur->type &&
+	    p->frag.cur->is_null) {
+		lerr(p->fname, p->p, "content in null element");
+		XML_StopParser(p->p, 0);
+		return;
+	}
 	
 	if (0 == p->stacksz || 
 	    0 == p->stack[p->stacksz - 1].translate) {
@@ -560,8 +592,19 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 			}
 
 	if (phrase) {
+		if (NULL != p->frag.cur &&
+		    FRAG_NODE == p->frag.cur->type &&
+		    p->frag.cur->is_null) {
+			lerr(p->fname, p->p, "content "
+				"within null element");
+			XML_StopParser(p->p, 0);
+			return;
+		}
 		frag_node_start(&p->frag, s, atts, xmlvoid(s));
-		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
+		
+		/* HTML5 is case insensitive. */
+
+		if (0 == strcasecmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
 		return;
 	}
@@ -621,15 +664,18 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 		putchar('>');
 	}
 
-	/* Check if we should begin translating. */
+	/* 
+	 * Check if we should begin translating.
+	 * These attributes are case insensitive. 
+	 */
 
 	for (attp = atts; NULL != *attp; attp += 2)
-		if (0 == strcmp(attp[0], "its:translate")) {
+		if (0 == strcasecmp(attp[0], "its:translate")) {
 			if (0 == strcasecmp(attp[1], "yes"))
 				dotrans = 1;
 			else if (0 == strcasecmp(attp[1], "no"))
 				dotrans = -1;
-		} else if (0 == strcmp(attp[0], "xml:space")) {
+		} else if (0 == strcasecmp(attp[0], "xml:space")) {
 			if (0 == strcasecmp(attp[1], "preserve"))
 				preserve = 1;
 			else if (0 == strcasecmp(attp[1], "default"))
@@ -646,11 +692,12 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	/*
 	 * If we're not changing our translation context, see if we've
 	 * entered a nested context and mark it, if so.
+	 * (Note that HTML5 is case insensitive.)
 	 */
 
 	if (0 == dotrans && 0 == preserve) {
 		assert(p->stacksz > 0);
-		if (0 == strcmp(s, p->stack[p->stacksz - 1].name))
+		if (0 == strcasecmp(s, p->stack[p->stacksz - 1].name))
 			p->stack[p->stacksz - 1].nested++;
 		return;
 	}
@@ -695,9 +742,12 @@ hend(void *dat, const XML_Char *s)
 
 	assert(p->stacksz > 0);
 
-	/* Set if we're at the end of our current scope. */
+	/* 
+	 * Set if we're at the end of our current scope.
+	 * Note that we're case insensitive.
+	 */
 
-	end = 0 == strcmp(p->stack[p->stacksz - 1].name, s) && 
+	end = 0 == strcasecmp(p->stack[p->stacksz - 1].name, s) && 
 		0 == p->stack[p->stacksz - 1].nested;
 
 	/* Set if we're ending a phrasing element in a translation. */
@@ -716,7 +766,7 @@ hend(void *dat, const XML_Char *s)
 
 	if (0 == end && phrase) {
 		frag_node_end(&p->frag, s);
-		if (0 == strcmp(p->stack[p->stacksz - 1].name, s))
+		if (0 == strcasecmp(p->stack[p->stacksz - 1].name, s))
 			p->stack[p->stacksz - 1].nested--;
 		return;
 	}
@@ -746,7 +796,7 @@ hend(void *dat, const XML_Char *s)
 	 * Otherwise, free the saved context name and pop context.
 	 */
 
-	if (strcmp(p->stack[p->stacksz - 1].name, s))
+	if (strcasecmp(p->stack[p->stacksz - 1].name, s))
 		return;
 	if (0 == p->stack[p->stacksz - 1].nested)
 		free(p->stack[--p->stacksz].name);

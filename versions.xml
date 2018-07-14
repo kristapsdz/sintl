@@ -5,6 +5,20 @@
 		<header>
 			<h1>0.2.3</h1>
 			<address>Kristaps Dzonsons</address>
+			<time datetime="2018-07-15">ongoing</time>
+		</header>
+		<aside>
+			Add in more reduction semantics (e.g., stripping away surrounding empty
+			nodes).
+			Also handle null elements (e.g., <code>&lt;img /&gt;</code>) properly in
+			serialising content.
+			Don't let null nodes accept children, too.
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
+			<h1>0.2.3</h1>
+			<address>Kristaps Dzonsons</address>
 			<time datetime="2018-07-14">2018-07-14</time>
 		</header>
 		<aside>
