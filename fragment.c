@@ -22,6 +22,7 @@
 # include <err.h>
 #endif
 #include <expat.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -312,7 +313,6 @@ frag_serialise_r(const struct frag *f,
 			frag_append(buf, sz, max, nbuf, nbufsz);
 			frag_append(buf, sz, max, "\">", 2);
 		}
-		frag_append(buf, sz, max, ">", 1);
 	} else if (FRAG_TEXT == f->type)
 		frag_append(buf, sz, max, f->val, f->valsz);
 
@@ -528,17 +528,78 @@ frag_print_reduced(const struct frag *f)
 		printf("</%.*s>", (int)f->valsz, f->val);
 }
 
+static const struct frag *
+frag_lookup(const struct fragseq *src, const struct frag *f)
+{
+	size_t		  id;
+	const char	**attp;
+	const char	 *er;
+
+	if (strcasecmp(f->val, "x") &&
+	    strcasecmp(f->val, "g")) 
+		return f;
+
+	attp = (const char **)f->atts;
+	for ( ; NULL != *attp; attp += 2)
+		if (0 == strcmp(attp[0], "id"))
+			break;
+
+	if (NULL == *attp) 
+		return f;
+
+	id = strtonum(attp[1], 0, INT_MAX, &er);
+	if (NULL == er && id < src->elemsz)
+		return src->elems[id];
+
+	return f;
+}
+
 static void
-frag_print_merge_r(const struct frag *f,
-	const char *source, const char *target)
+frag_write_seq(const struct fragseq *src,
+	const struct frag *f)
+{
+	const struct frag *rf = f;
+	size_t		  i;
+	const char	**attp;
+
+	if (FRAG_TEXT == f->type) {
+		assert(f->val);
+		printf("%.*s", (int)f->valsz, f->val);
+		return;
+	}
+
+	if (FRAG_NODE == f->type) {
+		rf = frag_lookup(src, f);
+		printf("<%.*s", (int)rf->valsz, rf->val);
+		attp = (const char **)rf->atts;
+		for ( ; NULL != *attp; attp += 2)
+			printf(" %s=\"%s\"", attp[0], attp[1]);
+		if (rf->is_null)
+			putchar('/');
+		putchar('>');
+	}
+
+	for (i = 0; i < f->childsz; i++)
+		frag_write_seq(src, f->child[i]);
+
+	if (FRAG_NODE == f->type && ! f->is_null)
+		printf("</%.*s>", (int)rf->valsz, rf->val);
+}
+
+static void
+frag_print_merge_r(const struct fragseq *src,
+	const struct frag *f, const char *source, 
+	const struct fragseq *target)
 {
 	size_t	 	  i, nn = 0, nt = 0, sz;
+	const struct frag *rf = f;
 	const char 	**attp;
 	const char	 *cp;
 
 	if (FRAG_NODE == f->type) {
-		printf("<%.*s", (int)f->valsz, f->val);
-		attp = (const char **)f->atts;
+		rf = frag_lookup(src, f);
+		printf("<%.*s", (int)rf->valsz, rf->val);
+		attp = (const char **)rf->atts;
 		for ( ; NULL != *attp; attp += 2)
 			printf(" %s=\"%s\"", attp[0], attp[1]);
 		if (f->is_null) {
@@ -562,7 +623,10 @@ frag_print_merge_r(const struct frag *f,
 		sz = f->child[0]->valsz;
 		if (sz && isspace((unsigned char)cp[0]))
 			putchar(' ');
-		printf("%s", target);
+
+		frag_write_seq(src, target->root);
+		/*printf("%s", target);*/
+
 		if (sz && isspace((unsigned char)cp[sz - 1]))
 			putchar(' ');
 		goto out;
@@ -595,7 +659,8 @@ frag_print_merge_r(const struct frag *f,
 		    isspace((unsigned char)f->child[i]->val[0]))
 			putchar(' ');
 
-		printf("%s", target);
+		frag_write_seq(src, target->root);
+		/*printf("%s", target);*/
 
 		for (i = f->childsz; i > 0; i--)  {
 			if ( ! frag_canreduce(f->child[i - 1]))
@@ -619,15 +684,14 @@ frag_print_merge_r(const struct frag *f,
 
 	for (i = 0; i < f->childsz; i++)
 		if (FRAG_NODE == f->child[i]->type)
-			frag_print_merge_r
-				(f->child[i], source, target);
+			frag_print_merge_r(src,
+				f->child[i], source, target);
 		else
 			printf("%.*s", (int)f->child[i]->valsz,
 				f->child[i]->val);
-
 out:
 	if (FRAG_NODE == f->type)
-		printf("</%.*s>", (int)f->valsz, f->val);
+		printf("</%.*s>", (int)rf->valsz, rf->val);
 }
 
 /*
@@ -635,14 +699,18 @@ out:
  * post-reduced "q".
  * Find the "source" in "q" by reversing the reduction and emitting the
  * "target" instead.
+ * If "source" is NULL, it's not reduced.
  * This should ONLY be run on reduced trees.
  */
 void
 frag_print_merge(const struct fragseq *q, 
-	const char *source, const char *target)
+	const char *source, const struct fragseq *target)
 {
 
-	frag_print_merge_r(q->root, source, target);
+	if (NULL == source)
+		frag_write_seq(q, target->root);
+	else
+		frag_print_merge_r(q, q->root, source, target);
 }
 
 /*

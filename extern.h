@@ -77,7 +77,7 @@ struct	fragseq {
  */
 struct	xliff {
 	char		*source; /* key */
-	char		*target; /* target */
+	struct fragseq	 target; /* target */
 };
 
 /*
@@ -119,7 +119,7 @@ struct	xparse {
 	size_t		  xliffmax; /* xliff buffer size */
 	struct fragseq	  frag;
 	char		 *source; /* current source in segment */
-	char		 *target; /* current target in segment */
+	struct fragseq	  target; /* current target in segment */
 	size_t		  nest; /* nesting in extraction */
 	enum xnesttype	  nesttype; /* type of nesting */
 	char	 	 *srclang; /* <xliff> srcLang definition */
@@ -139,7 +139,7 @@ void	 frag_node_text(struct fragseq *,
 void	 frag_node_end(struct fragseq *, const XML_Char *);
 char	*frag_serialise(const struct fragseq *, int, int *);
 void	 frag_print_merge(const struct fragseq *, 
-		const char *, const char *);
+		const char *, const struct fragseq *);
 void	 fragseq_clear(struct fragseq *);
 
 void	 results_extract(struct hparse *);

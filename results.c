@@ -71,9 +71,8 @@ results_update(struct hparse *hp, int keep)
 		for (j = 0; j < hp->xp->xliffsz; j++)
 			if (0 == strcmp(cp, hp->xp->xliffs[j].source))
 				break;
-		sorted[ssz].target = j == hp->xp->xliffsz ? 
-			NULL : hp->xp->xliffs[j].target;
-		sorted[ssz++].source = cp;
+		if (j < hp->xp->xliffsz)
+			sorted[ssz++] = hp->xp->xliffs[j];
 	}
 
 	/* Merge from the existing XLIFF back into the words. */
@@ -95,8 +94,7 @@ results_update(struct hparse *hp, int keep)
 					exit(EXIT_FAILURE);
 				}
 			}
-			sorted[ssz].target = hp->xp->xliffs[i].target;
-			sorted[ssz++].source = cp;
+			sorted[ssz++] = hp->xp->xliffs[i];
 		}
 
 	/* Output the sorted dictionary file. */
@@ -115,8 +113,8 @@ results_update(struct hparse *hp, int keep)
 		       "\t\t\t\t<target>%s</target>\n"
 		       "\t\t\t</trans-unit>\n",
 		       i + 1, sorted[i].source,
-		       NULL == sorted[i].target ? 
-		       	"TODO" : sorted[i].target);
+		       0 == sorted[i].target.copysz ? 
+		       	"TODO" : sorted[i].target.copy);
 
 	puts("\t\t</body>");
 	puts("\t</file>");

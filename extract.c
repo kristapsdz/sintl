@@ -227,11 +227,11 @@ xparse_free(struct xparse *xp)
 
 	for (i = 0; i < xp->xliffsz; i++) {
 		free(xp->xliffs[i].source);
-		free(xp->xliffs[i].target);
+		fragseq_clear(&xp->xliffs[i].target);
 	}
 
 	fragseq_clear(&xp->frag);
-	free(xp->target);
+	fragseq_clear(&xp->target);
 	free(xp->source);
 	free(xp->xliffs);
 	free(xp->srclang);
@@ -320,15 +320,16 @@ translate(struct hparse *hp)
 			if (reduce)
 				frag_print_merge(&hp->frag,
 					hp->xp->xliffs[i].source,
-					hp->xp->xliffs[i].target);
+					&hp->xp->xliffs[i].target);
 			else
-				printf("%s", hp->xp->xliffs[i].target);
+				frag_print_merge(&hp->frag, NULL,
+					&hp->xp->xliffs[i].target);
 			free(cp);
 			fragseq_clear(&hp->frag);
 			return 1;
 		}
 
-	lerr(hp->fname, hp->p, "no translation found");
+	lerr(hp->fname, hp->p, "no translation found: %s", cp);
 	printf("%s", cp);
 	free(cp);
 	fragseq_clear(&hp->frag);
@@ -375,7 +376,7 @@ xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 		return;
 	}
 
-	frag_node_start(&p->frag, s, atts, xmlvoid(s));
+	frag_node_start(&p->frag, s, atts, 0 == strcmp("x", s));
 }
 
 static void
@@ -397,10 +398,10 @@ xnestend(void *dat, const XML_Char *s)
 	XML_SetDefaultHandlerExpand(p->p, NULL);
 
 	if (NEST_TARGET == p->nesttype) {
-		free(p->target);
-		p->target = frag_serialise(&p->frag, 0, NULL);
-		fragseq_clear(&p->frag);
-		if (NULL == p->target)
+		fragseq_clear(&p->target);
+		p->target = p->frag;
+		memset(&p->frag, 0, sizeof(struct fragseq));
+		if (NULL == p->target.root)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
@@ -411,11 +412,6 @@ xnestend(void *dat, const XML_Char *s)
 	}
 }
 
-/*
- * Start an element in an XLIFF parse sequence.
- * We only care about <source>, <target>, and <segment>.
- * For the former two, start buffering for content.
- */
 static void
 xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 {
@@ -465,17 +461,9 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 		p->nesttype = NEST_TARGET;
 		XML_SetDefaultHandlerExpand(p->p, xtext);
 		XML_SetElementHandler(p->p, xneststart, xnestend);
-	} else if (0 == strcmp(s, "trans-unit"))
-		p->source = p->target = NULL;
+	} 
 }
 
-/*
- * Finished a <source>, <target>, or <segment>.
- * For the former tow, we want to verify that we've buffered a real word
- * we're going to use.
- * For the latter, we want both terms in place.
- * We then add it to the dictionary of translations.
- */
 static void
 xend(void *dat, const XML_Char *s)
 {
@@ -484,11 +472,12 @@ xend(void *dat, const XML_Char *s)
 	XML_SetDefaultHandlerExpand(p->p, NULL);
 
 	if (0 == strcmp(s, "trans-unit")) {
-		if (NULL == p->source || NULL == p->target) {
+		if (NULL == p->source || 
+		    NULL == p->target.root) {
 			lerr(p->fname, p->p, "no <source> or <target>");
+			fragseq_clear(&p->target);
 			free(p->source);
-			free(p->target);
-			p->source = p->target = NULL;
+			p->source = NULL;
 			return;
 		}
 		if (p->xliffsz + 1 > p->xliffmax) {
@@ -502,7 +491,8 @@ xend(void *dat, const XML_Char *s)
 		}
 		p->xliffs[p->xliffsz].source = p->source;
 		p->xliffs[p->xliffsz].target = p->target;
-		p->source = p->target = NULL;
+		p->source = NULL;
+		memset(&p->target, 0, sizeof(struct fragseq));
 		p->xliffsz++;
 	}
 }
@@ -551,6 +541,14 @@ hstart(void *dat, const XML_Char *s, const XML_Char **atts)
 	int		  dotrans = 0, preserve = 0, phrase = 0;
 	const char	**elems;
 	const char	 *its = NULL;
+
+	if (0 == strcasecmp(s, "xliff")) {
+		lerr(p->fname, p->p, 
+			"encountered <xliff>: did you "
+			"pass the wrong file?");
+		XML_StopParser(p->p, 0);
+		return;
+	}
 
 	/* 
 	 * Warn if we don't have the correct XML namespace.
