@@ -134,6 +134,7 @@ frag_node_start(struct fragseq *q,
 	f->valsz = strlen(f->val);
 	f->parent = q->cur;
 	f->atts = calloc(i + 1, sizeof(char *));
+	f->id = q->elemsz;
 	if (NULL == f->atts)
 		err(EXIT_FAILURE, NULL);
 	for (i = 0, attp = atts; NULL != *attp; attp += 2, i += 2) {
@@ -151,6 +152,16 @@ frag_node_start(struct fragseq *q,
 		q->cur->child[q->cur->childsz - 1]->next = f;
 	q->cur->childsz++;
 	q->cur = f;
+
+	/* Add to list of all elements. */
+
+	q->elems = reallocarray
+		(q->elems,
+		 q->elemsz + 1,
+		 sizeof(struct frag *));
+	if (NULL == q->elems)
+		err(EXIT_FAILURE, NULL);
+	q->elems[q->elemsz++] = f;
 }
 
 /*
@@ -283,26 +294,24 @@ static void
 frag_serialise_r(const struct frag *f, 
 	char **buf, size_t *sz, size_t *max)
 {
-	size_t	 	  i;
-	const char	**attp;
+	size_t	 	  i, nbufsz;
+	char		  nbuf[32];
 
 	assert(NULL != f);
 
 	if (FRAG_NODE == f->type) {
 		frag_append(buf, sz, max, "<", 1);
-		frag_append(buf, sz, max, f->val, f->valsz);
-		attp = (const char **)f->atts;
-		for ( ; NULL != *attp; attp += 2) {
-			frag_append(buf, sz, max, " ", 1);
-			frag_append(buf, sz, max, 
-				attp[0], strlen(attp[0]));
-			frag_append(buf, sz, max, "=\"", 2);
-			frag_append(buf, sz, max, 
-				attp[1], strlen(attp[1]));
-			frag_append(buf, sz, max, "\"", 1);
+		snprintf(nbuf, sizeof(nbuf), "%zu", f->id);
+		nbufsz = strlen(nbuf);
+		if (f->is_null) {
+			frag_append(buf, sz, max, "x id=\"", 6);
+			frag_append(buf, sz, max, nbuf, nbufsz);
+			frag_append(buf, sz, max, "\" />", 4);
+		} else {
+			frag_append(buf, sz, max, "g id=\"", 6);
+			frag_append(buf, sz, max, nbuf, nbufsz);
+			frag_append(buf, sz, max, "\">", 2);
 		}
-		if (f->is_null)
-			frag_append(buf, sz, max, "/", 1);
 		frag_append(buf, sz, max, ">", 1);
 	} else if (FRAG_TEXT == f->type)
 		frag_append(buf, sz, max, f->val, f->valsz);
@@ -310,11 +319,8 @@ frag_serialise_r(const struct frag *f,
 	for (i = 0; i < f->childsz; i++)
 		frag_serialise_r(f->child[i], buf, sz, max);
 
-	if (FRAG_NODE == f->type && f->node_closed && ! f->is_null) {
-		frag_append(buf, sz, max, "</", 2);
-		frag_append(buf, sz, max, f->val, f->valsz);
-		frag_append(buf, sz, max, ">", 1);
-	}
+	if (FRAG_NODE == f->type && f->node_closed && ! f->is_null)
+		frag_append(buf, sz, max, "</g>", 4);
 }
 
 static int
@@ -648,7 +654,9 @@ fragseq_clear(struct fragseq *p)
 
 	frag_node_free(p->root);
 	free(p->copy);
+	free(p->elems);
 	p->root = p->cur = NULL;
 	p->copy = NULL;
-	p->copysz = 0;
+	p->elems = NULL;
+	p->copysz = p->elemsz = 0;
 }

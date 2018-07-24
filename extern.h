@@ -34,14 +34,6 @@ struct	stack {
 	int		 preserve; /* preserve whitespace */
 };
 
-/*
- * A key-value pair for translation.
- */
-struct	xliff {
-	char		 *source; /* key */
-	char		 *target; /* value */
-};
-
 enum	fragtype {
 	FRAG_ROOT, /* root of fragment tree */
 	FRAG_TEXT, /* text node */
@@ -65,16 +57,27 @@ struct	frag {
 	size_t		  childsz; /* number of child nodes */
 	struct frag	 *next; /* next node */
 	struct frag	 *parent; /* parent (NULL if root) */
+	size_t		  id; /* index in fragseq->elemsz */
 };
 
 /*
  * Sequence of fragments.
  */
 struct	fragseq {
-	struct frag	*root; /* root of fragment tree */
-	struct frag	*cur; /* current node in fragment parse */
-	char		*copy; /* verbatim copy of all text */
-	size_t		 copysz; /* length of copy */
+	struct frag	 *root; /* root of fragment tree */
+	struct frag	 *cur; /* current node in fragment parse */
+	char		 *copy; /* verbatim copy of all text */
+	size_t		  copysz; /* length of copy */
+	struct frag	**elems;
+	size_t		  elemsz;
+};
+
+/*
+ * A key-value pair for translation.
+ */
+struct	xliff {
+	char		*source; /* key */
+	char		*target; /* target */
 };
 
 /*
