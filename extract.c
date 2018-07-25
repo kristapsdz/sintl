@@ -382,8 +382,13 @@ xneststart(void *dat, const XML_Char *s, const XML_Char **atts)
 static void
 xnestend(void *dat, const XML_Char *s)
 {
-	struct xparse	*p = dat;
-	const char	*rtype;
+	struct xparse	 *p = dat;
+	const char	 *rtype;
+	XML_ParsingStatus st;
+
+	XML_GetParsingStatus(p->p, &st);
+	if (XML_FINISHED == st.parsing) 
+		return;
 
 	rtype = NEST_TARGET == p->nesttype ? "target" : "source";
 
@@ -467,7 +472,12 @@ xstart(void *dat, const XML_Char *s, const XML_Char **atts)
 static void
 xend(void *dat, const XML_Char *s)
 {
-	struct xparse	*p = dat;
+	struct xparse	 *p = dat;
+	XML_ParsingStatus st;
+
+	XML_GetParsingStatus(p->p, &st);
+	if (XML_FINISHED == st.parsing) 
+		return;
 
 	XML_SetDefaultHandlerExpand(p->p, NULL);
 
@@ -737,6 +747,11 @@ hend(void *dat, const XML_Char *s)
 	struct hparse	 *p = dat;
 	const char	**elems;
 	int 		  phrase = 0, end = 0;
+	XML_ParsingStatus st;
+
+	XML_GetParsingStatus(p->p, &st);
+	if (XML_FINISHED == st.parsing) 
+		return;
 
 	assert(p->stacksz > 0);
 
