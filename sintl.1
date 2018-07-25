@@ -23,9 +23,9 @@
 .Sh SYNOPSIS
 .Nm sintl
 .Op Fl ek
-.Op Fl j Ar file
-.Op Fl u Ar file
-.Ar
+.Op Fl j Ar xliff
+.Op Fl u Ar xliff
+.Op Ar html5...
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,20 +45,20 @@ Its arguments are as follows:
 .It Fl e
 Extracts translatable strings from input HTML5 files, emitting the XLIFF
 translation file skeleton on standard output.
-.It Fl j Ar file
+.It Fl j Ar xliff
 Translate
 .Pq Qq join
 input files using the XLIFF
-.Ar file ,
-emitting translated HTML5 on standard output.
+.Ar xliff
+file, emitting translated HTML5 on standard output.
 .It Fl k
 When updating the XLIFF file, keep entries that are no longer valid.
 Ignored unless specified with
 .Fl u .
-.It Fl u Ar file
+.It Fl u Ar xliff
 Update the XLIFF
-.Ar file
-with new translatable strings in the HTML5 input files.
+.Ar xliff
+file with new translatable strings in the HTML5 input files.
 This merges existing and new terms both ways: if a new word is found in
 the inputs, it is added; existing words in the XLIFF file are retained.
 .It Ar
@@ -143,7 +143,7 @@ be used as a template for translating into different languages.
 <!DOCTYPE html>
 <html xmlns:its="http://www.w3.org/2005/11/its">
     <head><title>title</title></head>
-    <body><p>message</p></body>
+    <body><p>hello <img src="foo.jpg" /> world</p></body>
 </html>
 .Ed
 .Pp
@@ -161,7 +161,7 @@ Now edit the XLIFF file.
                 <target>Title</target>
             </trans-unit>
             <trans-unit id="2">
-                <source>message</source>
+                <source>hello <x id="0" /> world</source>
                 <target>Hello, World!</target>
             </trans-unit>
         </body>
