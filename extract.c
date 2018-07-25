@@ -329,7 +329,7 @@ translate(struct hparse *hp)
 			return 1;
 		}
 
-	lerr(hp->fname, hp->p, "no translation found: %s", cp);
+	lerr(hp->fname, hp->p, "no translation found");
 	printf("%s", cp);
 	free(cp);
 	fragseq_clear(&hp->frag);
