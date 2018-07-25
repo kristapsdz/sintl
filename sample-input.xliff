@@ -6,8 +6,8 @@
 				<target>Un fichier de test</target>
 			</trans-unit>
 			<trans-unit id="2">
-				<source>Hello, <i>world</i>!</source>
-				<target>Bonjour <i>le monde</i> !</target>
+				<source>Hello, <g id="0">world</g>!</source>
+				<target>Bonjour <g id="0">le monde</g> !</target>
 			</trans-unit>
 		</body>
 	</file>
