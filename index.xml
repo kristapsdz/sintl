@@ -13,24 +13,28 @@
 			<div><i class="fa fa-fw fa-gears fa-2x"></i> sintl(1)</div>
 			<div><i class="fa fa-fw fa-html5 fa-2x"></i> <span its:translate="yes">simple HTML5 translation</span></div>
 		</header>
+		<nav id="nav">
+			<a href="https://github.com/kristapsdz/sintl"><i class="fa fa-github"></i> github</a>
+			<a itemprop="downloadURL" href="snapshots/sintl.tar.gz"><i class="fa fa-gears"></i> source</a>
+			<a href="snapshots"><i class="fa fa-archive"></i> archive</a>
+			<a href="atom.xml"><i class="fa fa-rss"></i> rss</a>
+		</nav>
 		<article id="main">
 			<p>
 				<span class="nm" itemprop="name">sintl</span> is an
 				<span itemprop="description" its:translate="yes">
 					<a href="http://opensource.org/licenses/ISC" rel="license">open source</a> UNIX utility for
 					managing HTML5 translations</span>.
+				It is <strong>still being developed</strong>, and will evolve to support more features.
 				It works similarly to <a href="http://itstool.org/">itstool</a>, except that it's built exclusively for HTML5,
 				depends only on <a href="http://expat.sourceforge.net/">libexpat</a>, is in C, and works with <a
 					href="http://docs.oasis-open.org/xliff/xliff-core/v2.0/os/xliff-core-v2.0-os.html">XLIFF</a> 
 				instead of <a href="https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html">PO</a> files.
+				It is a <a href="https://bsd.lv">BSD.lv</a> project.
 			</p>
 			<p>
-				<strong>Warning</strong>: this tool is still experimental.
-				Its support for the XLIFF and ITS standards will continue to unfold.
-			</p>
-			<p>
-				The <a href="sintl.1.html">sintl(1)</a> utility creates XLIFF templates from HTML5, keeps templates up to date
-				with current translatable content in the HTML5, and joins HTML5 with XLIFF to produce translated output.  
+				The <a href="sintl.1.html">sintl(1)</a> executable creates XLIFF templates from HTML5, keeps templates up
+				to date with current translatable content in the HTML5, and joins HTML5 with XLIFF to produce translated output.  
 				The HTML5 input uses a simple subset of <a href="http://www.w3.org/TR/its20/">ITS</a> to indicate what should
 				and should not be translated.
 			</p>
@@ -62,7 +66,15 @@
 			</nav>
 		</article>
 		<footer>
-			&#169; 2014, 2016, 2018 <a rel="author" href="https://github.com/kristapsdz">Kristaps Dzonsons</a>
+			<div>
+				&#169; 2014, 2016, 2018 <a rel="author" href="https://github.com/kristapsdz">Kristaps Dzonsons</a>
+			</div>
+			<nav>
+				<a href="https://github.com/kristapsdz/sintl"><i class="fa fa-fw fa-github"></i></a>
+				<a itemprop="downloadURL" href="snapshots/sintl.tar.gz"><i class="fa fa-fw fa-gears"></i></a>
+				<a href="snapshots"><i class="fa fa-fw fa-archive"></i></a>
+				<a href="atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+			</nav>
 		</footer>
 	</body>
 </html>
