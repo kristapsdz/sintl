@@ -1,6 +1,6 @@
 include Makefile.configure
 
-VERSION 	 = 0.2.3
+VERSION 	 = 0.2.4
 OBJS		 = compats.o \
 		   extract.o \
 		   fragment.o \
@@ -11,7 +11,7 @@ SRCS		 = extract.c \
 		   main.c \
 		   results.c
 XMLS		 = index.xml
-HTMLS 		 = index.html sintl.1.html
+HTMLS 		 = atom.xml index.html sintl.1.html
 CSSS 		 = mandoc.css index.css 
 BINDIR 		 = $(PREFIX)/bin
 MANDIR 		 = $(PREFIX)/man
@@ -74,7 +74,7 @@ sample-xliff.html: sample-input.xliff
 $(OBJS): extern.h
 
 atom.xml: versions.xml
-	sblg -o $@ -a versions.xml
+	sblg -a versions.xml
 
 sintl.1.html: sintl.1
 	mandoc -Ostyle=mandoc.css -Thtml sintl.1 >$@

@@ -3,16 +3,24 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
-			<h1>0.2.3</h1>
+			<h1>0.2.4</h1>
 			<address>Kristaps Dzonsons</address>
-			<time datetime="2018-07-15">ongoing</time>
+			<time datetime="2018-07-25">2018-07-25</time>
 		</header>
 		<aside>
-			Add in more reduction semantics (e.g., stripping away surrounding empty
-			nodes).
-			Also handle null elements (e.g., <code>&lt;img /&gt;</code>) properly in
-			serialising content.
-			Don't let null nodes accept children, too.
+			<p>
+				Add in more reduction semantics (e.g., stripping away surrounding empty
+				nodes).
+				Also handle null elements (e.g., <code>&lt;img /&gt;</code>) properly in
+				serialising content.
+				Don't let null nodes accept children, too.
+				Run <a href="http://lcamtuf.coredump.cx/afl/">AFL</a> extensively on
+				all methods of operation.
+			</p>
+			<p>
+				Also, fully support the <code>&lt;x /&gt;</code> and
+				<code>&lt;g&gt;&lt;/g&gt;</code> replacement of inline content.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -22,11 +30,13 @@
 			<time datetime="2018-07-14">2018-07-14</time>
 		</header>
 		<aside>
-			Revert to using XLIFF 1.2 after realising that most tools to handle the
-			newest XLIFF standard version.
-			Have <b>-u</b> mode not keep old translations by default.
-			Add <b>-k</b> to keep old translations when updating.
-			Continue working on reducing translatable fragments.
+			<p>
+				Revert to using XLIFF 1.2 after realising that most tools to handle the
+				newest XLIFF standard version.
+				Have <b>-u</b> mode not keep old translations by default.
+				Add <b>-k</b> to keep old translations when updating.
+				Continue working on reducing translatable fragments.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -36,9 +46,11 @@
 			<time datetime="2018-07-12">2018-07-12</time>
 		</header>
 		<aside>
-			Handle space preservation during the parse itself, not afterward.
-			This will (in the future) handle <code>xml:space</code> attributes in
-			embedded phrasing content.
+			<p>
+				Handle space preservation during the parse itself, not afterward.
+				This will (in the future) handle <code>xml:space</code> attributes in
+				embedded phrasing content.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -48,8 +60,10 @@
 			<time datetime="2018-07-10">2018-07-10</time>
 		</header>
 		<aside>
-			Add initial reduction and minimisation.
-			These optimise translatable content to remove superfluous tags.
+			<p>
+				Add initial reduction and minimisation.
+				These optimise translatable content to remove superfluous tags.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -59,13 +73,15 @@
 			<time datetime="2018-07-08">2018-07-08</time>
 		</header>
 		<aside>
-			Use <a href="https://github.com/kristapsdz/oconfigure">oconfigure</a> for
-			configuration.
-			Fix an assertion failure.
-			Allow for nested elements in <code>&lt;source&gt;</code> and
-			<code>&lt;target&gt;</code> as defined by the ITS standard, but disallow
-			broken phrase element scoping.
-			Update manual.
+			<p>
+				Use <a href="https://github.com/kristapsdz/oconfigure">oconfigure</a> for
+				configuration.
+				Fix an assertion failure.
+				Allow for nested elements in <code>&lt;source&gt;</code> and
+				<code>&lt;target&gt;</code> as defined by the ITS standard, but disallow
+				broken phrase element scoping.
+				Update manual.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -75,11 +91,13 @@
 			<time datetime="2016-06-12">2016-06-12</time>
 		</header>
 		<aside>
-			Preserve <code>&lt;target&gt;</code>'s nested elements.
-			Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and
-			Apple's sandbox.
-			Upload to <a href="https://github.com">GitHub</a>, modernise site and style
-			for manual.
+			<p>
+				Preserve <code>&lt;target&gt;</code>'s nested elements.
+				Add support for <a href="http://man.openbsd.org/pledge.2">pledge(2)</a> and
+				Apple's sandbox.
+				Upload to <a href="https://github.com">GitHub</a>, modernise site and style
+				for manual.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -89,11 +107,13 @@
 			<time datetime="2014-12-09">2014-12-09</time>
 		</header>
 		<aside>
-			Cleaned up internals for readability (no fixes).
-			Added some missing error-message reporting.
-			Also have the -<b>u</b> merge option merge both ways: if a new entry is
-			found, it is merged into the XLIFF file; if it already exists in the XLIFF
-			file, it is kept as-is.
+			<p>
+				Cleaned up internals for readability (no fixes).
+				Added some missing error-message reporting.
+				Also have the -<b>u</b> merge option merge both ways: if a new entry is
+				found, it is merged into the XLIFF file; if it already exists in the XLIFF
+				file, it is kept as-is.
+			</p>
 		</aside>
 	</article>
 	<article data-sblg-article="1" data-sblg-tags="version">
@@ -103,8 +123,10 @@
 			<time datetime="2014-12-08">2014-12-08</time>
 		</header>
 		<aside>
-			Initial public release.
-			This utility is very experimental for the time being, but <q>works for me</q>.
+			<p>
+				Initial public release.
+				This utility is very experimental for the time being, but <q>works for me</q>.
+			</p>
 		</aside>
 	</article>
 </articles>
