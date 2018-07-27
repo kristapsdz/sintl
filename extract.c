@@ -330,6 +330,7 @@ translate(struct hparse *hp)
 		}
 
 	lerr(hp->fname, hp->p, "no translation found");
+
 	printf("%s", cp);
 	free(cp);
 	fragseq_clear(&hp->frag);
@@ -410,7 +411,9 @@ xnestend(void *dat, const XML_Char *s)
 			lerr(p->fname, p->p, "empty <target>");
 	} else {
 		free(p->source);
-		p->source = frag_serialise(&p->frag, 0, NULL);
+		p->source = strndup(p->frag.copy, p->frag.copysz);
+		if (NULL == p->source)
+			err(EXIT_FAILURE, NULL);
 		fragseq_clear(&p->frag);
 		if (NULL == p->source)
 			lerr(p->fname, p->p, "empty <source>");
