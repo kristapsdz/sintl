@@ -6,7 +6,6 @@
 	</head>
 	<body>
 		<p>Hello, <i>world</i>!</p>
-		<p>Hello, <i>2world</i>!</p>
 		<p its:translate="no">Don't translate this.</p>
 	</body>
 </html>
