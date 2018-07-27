@@ -72,15 +72,18 @@ sandbox(void)
 int
 main(int argc, char *argv[])
 {
-	int		 ch, rc, keep = 0;
+	int		 ch, rc, keep = 0, copy = 0;
 	const char	*xliff = NULL;
 	enum op	 	 op = OP_EXTRACT;
 	XML_Parser	 p;
 
 	sandbox();
 
-	while (-1 != (ch = getopt(argc, argv, "ej:ku:")))
+	while (-1 != (ch = getopt(argc, argv, "cej:ku:")))
 		switch (ch) {
+		case ('c'):
+			copy = 1;
+			break;
 		case ('e'):
 			op = OP_EXTRACT;
 			xliff = NULL;
@@ -110,7 +113,7 @@ main(int argc, char *argv[])
 
 	switch (op) {
 	case (OP_EXTRACT):
-		rc = extract(p, argc, argv);
+		rc = extract(p, copy, argc, argv);
 		break;
 	case (OP_JOIN):
 		assert(NULL != xliff);
@@ -128,7 +131,7 @@ main(int argc, char *argv[])
 	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
 
 usage:
-	fprintf(stderr, "usage: %s [-ek] "
+	fprintf(stderr, "usage: %s [-cek] "
 		"[-j xliff] [-u xliff] html5...\n", getprogname());
 	return(EXIT_FAILURE);
 }

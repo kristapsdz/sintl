@@ -124,7 +124,7 @@ results_update(struct hparse *hp, int keep)
 }
 
 void
-results_extract(struct hparse *p)
+results_extract(struct hparse *p, int copy)
 {
 	size_t	 i, j;
 
@@ -138,13 +138,15 @@ results_extract(struct hparse *p)
 	for (i = j = 0; i < p->wordsz; i++) {
 		if (i && 0 == strcmp(p->words[i], p->words[i - 1]))
 			continue;
-		printf("\t\t\t<trans-unit id=\"%zu\">\n", ++j);
-		printf("\t\t\t\t<source>%s</source>\n", p->words[i]);
-		puts("\t\t\t\t<target>TODO</target>");
+		printf("\t\t\t<trans-unit id=\"%zu\">\n"
+		       "\t\t\t\t<source>%s</source>\n", 
+		       ++j, p->words[i]);
+		if (copy)
+			printf("\t\t\t\t<target>%s</target>\n", 
+				p->words[i]);
 		puts("\t\t\t</trans-unit>");
 	}
-	puts("\t\t</body>");
-	puts("\t</file>");
-	puts("</xliff>");
+	puts("\t\t</body>\n"
+	     "\t</file>\n"
+	     "</xliff>");
 }
-

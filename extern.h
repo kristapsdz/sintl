@@ -128,7 +128,7 @@ struct	xparse {
 
 __BEGIN_DECLS
 
-int	 extract(XML_Parser, int, char *[]);
+int	 extract(XML_Parser, int, int, char *[]);
 int	 join(const char *, XML_Parser, int, char *[]);
 int	 update(const char *, XML_Parser, int, int, char *[]);
 
@@ -142,7 +142,7 @@ void	 frag_print_merge(const struct fragseq *,
 		const char *, const struct fragseq *);
 void	 fragseq_clear(struct fragseq *);
 
-void	 results_extract(struct hparse *);
+void	 results_extract(struct hparse *, int);
 void	 results_update(struct hparse *, int);
 
 __END_DECLS

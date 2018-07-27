@@ -935,7 +935,7 @@ scanner(struct hparse *hp, int argc, char *argv[])
  * template from the results.
  */
 int
-extract(XML_Parser p, int argc, char *argv[])
+extract(XML_Parser p, int copy, int argc, char *argv[])
 {
 	struct hparse	*hp;
 	int		 rc;
@@ -943,7 +943,7 @@ extract(XML_Parser p, int argc, char *argv[])
 	hp = hparse_alloc(p, POP_EXTRACT);
 
 	if (0 != (rc = scanner(hp, argc, argv)))
-		results_extract(hp);
+		results_extract(hp, copy);
 
 	hparse_free(hp);
 	return(rc);
