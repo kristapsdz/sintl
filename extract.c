@@ -992,7 +992,8 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
  * argv, outputting the merged XLIFF file.
  */
 int
-update(const char *xliff, XML_Parser p, int keep, int argc, char *argv[])
+update(const char *xliff, XML_Parser p, 
+	int copy, int keep, int argc, char *argv[])
 {
 	struct xparse	*xp;
 	struct hparse	*hp;
@@ -1001,7 +1002,7 @@ update(const char *xliff, XML_Parser p, int keep, int argc, char *argv[])
 	int		 fd, rc;
 
 	if (-1 == (fd = map_open(xliff, &mapsz, &map)))
-		return(0);
+		return 0;
 
 	xp = xparse_alloc(xliff, p);
 
@@ -1017,11 +1018,11 @@ update(const char *xliff, XML_Parser p, int keep, int argc, char *argv[])
 		hp = hparse_alloc(p, POP_EXTRACT);
 		hp->xp = xp;
 		if (0 != (rc = scanner(hp, argc, argv)))
-			results_update(hp, keep);
+			results_update(hp, copy, keep);
 		hparse_free(hp);
 	} else
 		perr(xliff, p);
 
 	xparse_free(xp);
-	return(XML_STATUS_OK == rc);
+	return XML_STATUS_OK == rc;
 }

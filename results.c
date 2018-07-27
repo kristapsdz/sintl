@@ -40,7 +40,7 @@ cmp(const void *p1, const void *p2)
 }
 
 void
-results_update(struct hparse *hp, int keep)
+results_update(struct hparse *hp, int copy, int keep)
 {
 	char		*cp;
 	size_t	 	 i, j, ssz, smax;
@@ -53,7 +53,7 @@ results_update(struct hparse *hp, int keep)
 	sorted = NULL;
 	ssz = smax = 0;
 
-	/* Merge found words into the merge buffer. */
+	/* Merge found words in input into the merge buffer. */
 
 	for (i = 0; i < hp->wordsz; i++) {
 		cp = hp->words[i];
@@ -68,11 +68,24 @@ results_update(struct hparse *hp, int keep)
 				exit(EXIT_FAILURE);
 			}
 		}
+		
+		/* 
+		 * Are we finding this in the xliff?
+		 * If so, use the xliff's target information.
+		 * Otherwise, copy only the source.
+		 */
+
 		for (j = 0; j < hp->xp->xliffsz; j++)
 			if (0 == strcmp(cp, hp->xp->xliffs[j].source))
 				break;
-		if (j < hp->xp->xliffsz)
-			sorted[ssz++] = hp->xp->xliffs[j];
+
+		if (j == hp->xp->xliffsz) {
+			memset(&sorted[ssz], 0, sizeof(struct xliff));
+			sorted[ssz].source = cp;
+		} else
+			sorted[ssz] = hp->xp->xliffs[j];
+
+		ssz++;
 	}
 
 	/* Merge from the existing XLIFF back into the words. */
@@ -108,13 +121,26 @@ results_update(struct hparse *hp, int keep)
 	       NULL == hp->xp->trglang ? "TODO" : hp->xp->trglang);
 
 	for (i = 0; i < ssz; i++) 
-		printf("\t\t\t<trans-unit id=\"%zu\">\n"
-		       "\t\t\t\t<source>%s</source>\n"
-		       "\t\t\t\t<target>%s</target>\n"
-		       "\t\t\t</trans-unit>\n",
-		       i + 1, sorted[i].source,
-		       0 == sorted[i].target.copysz ? 
-		       	"TODO" : sorted[i].target.copy);
+		if (0 == sorted[i].target.copysz && copy)
+			printf("\t\t\t<trans-unit id=\"%zu\">\n"
+			       "\t\t\t\t<source>%s</source>\n"
+			       "\t\t\t\t<target>%s</target>\n"
+			       "\t\t\t</trans-unit>\n",
+			       i + 1, sorted[i].source,
+			       sorted[i].source);
+		else if (0 == sorted[i].target.copysz)
+			printf("\t\t\t<trans-unit id=\"%zu\">\n"
+			       "\t\t\t\t<source>%s</source>\n"
+			       "\t\t\t</trans-unit>\n",
+			       i + 1, sorted[i].source);
+		else
+			printf("\t\t\t<trans-unit id=\"%zu\">\n"
+			       "\t\t\t\t<source>%s</source>\n"
+			       "\t\t\t\t<target>%.*s</target>\n"
+			       "\t\t\t</trans-unit>\n",
+			       i + 1, sorted[i].source,
+			       (int)sorted[i].target.copysz,
+			       sorted[i].target.copy);
 
 	puts("\t\t</body>");
 	puts("\t</file>");

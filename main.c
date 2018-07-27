@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 
 	if (NULL == (p = XML_ParserCreate(NULL))) {
 		perror(NULL);
-		return(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	switch (op) {
@@ -121,17 +121,17 @@ main(int argc, char *argv[])
 		break;
 	case (OP_UPDATE):
 		assert(NULL != xliff);
-		rc = update(xliff, p, keep, argc, argv);
+		rc = update(xliff, p, copy, keep, argc, argv);
 		break;
 	default:
 		abort();
 	}
 
 	XML_ParserFree(p);
-	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
+	return rc ? EXIT_SUCCESS : EXIT_FAILURE;
 
 usage:
 	fprintf(stderr, "usage: %s [-cek] "
 		"[-j xliff] [-u xliff] html5...\n", getprogname());
-	return(EXIT_FAILURE);
+	return EXIT_FAILURE;
 }

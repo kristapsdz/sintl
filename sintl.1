@@ -46,27 +46,35 @@ Its arguments are as follows:
 Copy mode: when used with
 .Fl e ,
 assigns the same target as the source.
-By default, the target is left blank.
+With
+.Fl u ,
+does the same for new entries.
+By default, in either case the target is left blank.
 .It Fl e
-Extracts translatable strings from input HTML5 files, emitting the XLIFF
-translation file skeleton on standard output.
+Extracts translatable strings from
+.Ar html5 ,
+emitting a skeleton XLIFF translation file on standard output.
 .It Fl j Ar xliff
 Translate
 .Pq Qq join
-input files using the XLIFF
-.Ar xliff
-file, emitting translated HTML5 on standard output.
+.Ar html5
+using
+.Ar xliff ,
+emitting translated HTML5 on standard output.
 .It Fl k
-When updating the XLIFF file, keep entries that are no longer valid.
-Ignored unless specified with
-.Fl u .
+When used with
+.Fl u ,
+keep entries that are no longer valid.
+Otherwise is ignored.
 .It Fl u Ar xliff
-Update the XLIFF
+Update
 .Ar xliff
-file with new translatable strings in the HTML5 input files.
-This merges existing and new terms both ways: if a new word is found in
-the inputs, it is added; existing words in the XLIFF file are retained.
-.It Ar
+with new translatable strings in
+.Ar html5 .
+Non-matching terms are discarded unless
+.Fl k
+is specified.
+.It Ar html5
 HTML5 input files to be translated or mined for translatable information.
 .El
 .Pp
