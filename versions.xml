@@ -3,6 +3,23 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
+			<h1>0.2.5</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2018-07-30">2018-07-30</time>
+		</header>
+		<aside>
+			<p>
+				Fix update mode (<b>-u</b>).
+				Also fix joining reduced sources&#8212;before, they would fail to
+				match properly even though they were the same.
+				Lastly, add a copy mode (<b>-c</b>) to both updating and extracting.
+				This provides an initial <q>translation</q> and also makes testing
+				much easier.
+			</p>
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
 			<h1>0.2.4</h1>
 			<address>Kristaps Dzonsons</address>
 			<time datetime="2018-07-25">2018-07-25</time>
