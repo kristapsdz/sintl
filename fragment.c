@@ -307,7 +307,7 @@ frag_serialise_r(const struct frag *f,
 		if (f->is_null) {
 			frag_append(buf, sz, max, "x id=\"", 6);
 			frag_append(buf, sz, max, nbuf, nbufsz);
-			frag_append(buf, sz, max, "\" />", 4);
+			frag_append(buf, sz, max, "\"/>", 3);
 		} else {
 			frag_append(buf, sz, max, "g id=\"", 6);
 			frag_append(buf, sz, max, nbuf, nbufsz);
