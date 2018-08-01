@@ -35,8 +35,9 @@ xcmp(const void *p1, const void *p2)
 static int
 cmp(const void *p1, const void *p2)
 {
+	const struct word *x1 = p1, *x2 = p2;
 
-	return strcmp(*(const char **)p1, *(const char **)p2);
+	return strcmp(x1->source, x2->source);
 }
 
 void
@@ -48,7 +49,7 @@ results_update(struct hparse *hp, int copy, int keep)
 
 	/* Allows us to de-dupe in place. */
 
-	qsort(hp->words, hp->wordsz, sizeof(char *), cmp);
+	qsort(hp->words, hp->wordsz, sizeof(struct word), cmp);
 
 	sorted = NULL;
 	ssz = smax = 0;
@@ -56,8 +57,8 @@ results_update(struct hparse *hp, int copy, int keep)
 	/* Merge found words in input into the merge buffer. */
 
 	for (i = 0; i < hp->wordsz; i++) {
-		cp = hp->words[i];
-		if (i && 0 == strcmp(cp, hp->words[i - 1]))
+		cp = hp->words[i].source;
+		if (i && 0 == strcmp(cp, hp->words[i - 1].source))
 			continue;
 		if (ssz + 1 > smax) {
 			smax = ssz + 512;
@@ -68,7 +69,7 @@ results_update(struct hparse *hp, int copy, int keep)
 				exit(EXIT_FAILURE);
 			}
 		}
-		
+
 		/* 
 		 * Are we finding this in the xliff?
 		 * If so, use the xliff's target information.
@@ -80,6 +81,10 @@ results_update(struct hparse *hp, int copy, int keep)
 				break;
 
 		if (j == hp->xp->xliffsz) {
+			fprintf(stderr, "%s:%zu:%zu: new translation\n",
+				hp->fname,
+				hp->words[i].line,
+				hp->words[i].col);
 			memset(&sorted[ssz], 0, sizeof(struct xliff));
 			sorted[ssz].source = cp;
 		} else
@@ -90,25 +95,34 @@ results_update(struct hparse *hp, int copy, int keep)
 
 	/* Merge from the existing XLIFF back into the words. */
 
-	if (keep)
-		for (i = 0; i < hp->xp->xliffsz; i++) {
-			cp = hp->xp->xliffs[i].source;
-			for (j = 0; j < hp->wordsz; j++)
-				if (0 == strcmp(cp, hp->words[j]))
-					break;
-			if (j < hp->wordsz)
-				continue;
-			if (ssz + 1 > smax) {
-				smax = ssz + 512;
-				sorted = reallocarray(sorted, 
-					smax, sizeof(struct xliff));
-				if (NULL == sorted) {
-					perror(NULL);
-					exit(EXIT_FAILURE);
-				}
-			}
-			sorted[ssz++] = hp->xp->xliffs[i];
+	for (i = 0; i < hp->xp->xliffsz; i++) {
+		cp = hp->xp->xliffs[i].source;
+		for (j = 0; j < hp->wordsz; j++)
+			if (0 == strcmp(cp, hp->words[j].source))
+				break;
+		if (j < hp->wordsz)
+			continue;
+	
+		if ( ! keep) {
+			fprintf(stderr, "%s:%zu:%zu: discarding "
+				"unused translation\n",
+				hp->xp->fname,
+				hp->xp->xliffs[i].line,
+				hp->xp->xliffs[i].col);
+			continue;
 		}
+
+		if (ssz + 1 > smax) {
+			smax = ssz + 512;
+			sorted = reallocarray(sorted, 
+				smax, sizeof(struct xliff));
+			if (NULL == sorted) {
+				perror(NULL);
+				exit(EXIT_FAILURE);
+			}
+		}
+		sorted[ssz++] = hp->xp->xliffs[i];
+	}
 
 	/* Output the sorted dictionary file. */
 	qsort(sorted, ssz, sizeof(struct xliff), xcmp);
@@ -154,7 +168,7 @@ results_extract(struct hparse *p, int copy)
 {
 	size_t	 i, j;
 
-	qsort(p->words, p->wordsz, sizeof(char *), cmp);
+	qsort(p->words, p->wordsz, sizeof(struct word), cmp);
 
 	printf("<xliff version=\"1.2\">\n"
 	       "\t<file source-language=\"%s\" "
@@ -162,14 +176,14 @@ results_extract(struct hparse *p, int copy)
 	       "\t\t<body>\n",
 	       NULL == p->lang ? "TODO" : p->lang);
 	for (i = j = 0; i < p->wordsz; i++) {
-		if (i && 0 == strcmp(p->words[i], p->words[i - 1]))
+		if (i && 0 == strcmp(p->words[i].source, p->words[i - 1].source))
 			continue;
 		printf("\t\t\t<trans-unit id=\"%zu\">\n"
 		       "\t\t\t\t<source>%s</source>\n", 
-		       ++j, p->words[i]);
+		       ++j, p->words[i].source);
 		if (copy)
 			printf("\t\t\t\t<target>%s</target>\n", 
-				p->words[i]);
+				p->words[i].source);
 		puts("\t\t\t</trans-unit>");
 	}
 	puts("\t\t</body>\n"

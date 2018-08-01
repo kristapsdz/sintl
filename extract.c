@@ -199,7 +199,7 @@ hparse_free(struct hparse *hp)
 		free(hp->stack[--hp->stacksz].name);
 
 	for (i = 0; i < hp->wordsz; i++)
-		free(hp->words[i]);
+		free(hp->words[i].source);
 
 	fragseq_clear(&hp->frag);
 	free(hp->words);
@@ -271,12 +271,17 @@ store(struct hparse *p)
 	if (p->wordsz + 1 > p->wordmax) {
 		p->wordmax += 512;
 		p->words = reallocarray
-			(p->words, p->wordmax, sizeof(char *));
+			(p->words, p->wordmax, sizeof(struct word));
 		if (NULL == p->words)
 			err(EXIT_FAILURE, NULL);
 	}
 
-	p->words[p->wordsz++] = cp;
+	p->words[p->wordsz].source = cp;
+	p->words[p->wordsz].line = 
+		XML_GetCurrentLineNumber(p->p);
+	p->words[p->wordsz].col = 
+		XML_GetCurrentColumnNumber(p->p);
+	p->wordsz++;
 	return 1;
 }
 
@@ -502,6 +507,10 @@ xend(void *dat, const XML_Char *s)
 			if (NULL == p->xliffs)
 				err(EXIT_FAILURE, NULL);
 		}
+		p->xliffs[p->xliffsz].line = 
+			XML_GetCurrentLineNumber(p->p);
+		p->xliffs[p->xliffsz].col = 
+			XML_GetCurrentColumnNumber(p->p);
 		p->xliffs[p->xliffsz].source = p->source;
 		p->xliffs[p->xliffsz].target = p->target;
 		p->source = NULL;

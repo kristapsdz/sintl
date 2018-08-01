@@ -76,8 +76,19 @@ struct	fragseq {
  * A key-value pair for translation.
  */
 struct	xliff {
+	size_t		 col; /* column (from 1) */
+	size_t		 line; /* line (from 1) */
 	char		*source; /* key */
 	struct fragseq	 target; /* target */
+};
+
+/*
+ * A value extracted for translation.
+ */
+struct	word {
+	size_t		 col; /* column (from 1) */
+	size_t		 line; /* line (from 1) */
+	char		*source; /* key */
 };
 
 /*
@@ -88,17 +99,17 @@ struct	xliff {
  * Otherwise, we fill in with the translation.
  */
 struct	hparse {
-	XML_Parser	  p;
-	const char	 *fname; /* file being parsed */
-	enum pop	  op; /* what we're doing */
-	char		**words; /* if scanning, scanned words */
-	size_t		  wordsz; /* number of words */
-	size_t		  wordmax; /* word buffer size */
-	struct fragseq	  frag;
-	struct stack	  stack[64]; /* stack of contexts */
-	size_t		  stacksz; /* stack size */
-	const struct xparse *xp;
-	char	 	 *lang; /* <html> language definition */
+	XML_Parser	 p;
+	const char	*fname; /* file being parsed */
+	enum pop	 op; /* what we're doing */
+	struct word	*words; /* if scanning, scanned words */
+	size_t		 wordsz; /* number of words */
+	size_t		 wordmax; /* word buffer size */
+	struct fragseq	 frag; /* current source/target fragment */
+	struct stack	 stack[64]; /* stack of contexts */
+	size_t		 stacksz; /* stack size */
+	const struct xparse *xp; /* XLIFF for source (or NULL) */
+	char	 	*lang; /* <html> language definition */
 };
 
 enum	xnesttype {
