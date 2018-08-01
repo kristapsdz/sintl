@@ -297,7 +297,7 @@ translate(struct hparse *hp)
 {
 	char	*cp;
 	size_t	 i;
-	int	 reduce = 0;
+	int	 reduce = 0, rc = 1;
 
 	assert(POP_JOIN == hp->op);
 	assert(hp->stack[hp->stacksz - 1].translate);
@@ -336,14 +336,15 @@ translate(struct hparse *hp)
 
 	lerr(hp->fname, hp->p, "no translation found");
 
-	if ( ! hp->copy)
+	if ( ! hp->copy) {
+		rc = 0;
 		XML_StopParser(hp->p, 0);
-	else
+	} else
 		printf("%s", cp);
 
 	free(cp);
 	fragseq_clear(&hp->frag);
-	return 1;
+	return rc;
 }
 
 static void
@@ -977,7 +978,7 @@ join(const char *xliff, XML_Parser p,
 	struct hparse	*hp;
 	char		*map;
 	size_t		 mapsz;
-	int		 fd, rc;
+	int		 fd, rc, c = 0;
 
 	if (-1 == (fd = map_open(xliff, &mapsz, &map)))
 		return 0;
@@ -995,14 +996,14 @@ join(const char *xliff, XML_Parser p,
 		hp = hparse_alloc(p, POP_JOIN);
 		hp->xp = xp;
 		hp->copy = copy;
-		rc = scanner(hp, argc, argv);
+		c = scanner(hp, argc, argv);
 		assert(NULL == hp->words);
 		hparse_free(hp);
 	} else
 		perr(xliff, p);
 
 	xparse_free(xp);
-	return XML_STATUS_OK == rc;
+	return c;
 }
 
 /*
