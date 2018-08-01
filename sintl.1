@@ -22,7 +22,7 @@
 .Nd simple internationalisation utility
 .Sh SYNOPSIS
 .Nm sintl
-.Op Fl cek
+.Op Fl cekq
 .Op Fl j Ar xliff
 .Op Fl u Ar xliff
 .Op Ar html5...
@@ -66,6 +66,10 @@ When used with
 .Fl u ,
 keep entries that are no longer valid.
 Otherwise is ignored.
+.It Fl q
+Quiet: don't note additions and deletions when
+.Fl u
+is used.
 .It Fl u Ar xliff
 Update
 .Ar xliff
@@ -74,6 +78,7 @@ with new translatable strings in
 Non-matching terms are discarded unless
 .Fl k
 is specified.
+Additions and deletions are noted on standard error.
 .It Ar html5
 HTML5 input files to be translated or mined for translatable information.
 .El

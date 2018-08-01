@@ -41,7 +41,7 @@ cmp(const void *p1, const void *p2)
 }
 
 void
-results_update(struct hparse *hp, int copy, int keep)
+results_update(struct hparse *hp, int copy, int keep, int quiet)
 {
 	char		*cp;
 	size_t	 	 i, j, ssz, smax;
@@ -81,10 +81,11 @@ results_update(struct hparse *hp, int copy, int keep)
 				break;
 
 		if (j == hp->xp->xliffsz) {
-			fprintf(stderr, "%s:%zu:%zu: new translation\n",
-				hp->fname,
-				hp->words[i].line,
-				hp->words[i].col);
+			if ( ! quiet)
+				fprintf(stderr, "%s:%zu:%zu: "
+					"new translation\n",
+					hp->fname, hp->words[i].line,
+					hp->words[i].col);
 			memset(&sorted[ssz], 0, sizeof(struct xliff));
 			sorted[ssz].source = cp;
 		} else
@@ -103,14 +104,15 @@ results_update(struct hparse *hp, int copy, int keep)
 		if (j < hp->wordsz)
 			continue;
 	
-		if ( ! keep) {
+		if ( ! keep && ! quiet) {
 			fprintf(stderr, "%s:%zu:%zu: discarding "
 				"unused translation\n",
 				hp->xp->fname,
 				hp->xp->xliffs[i].line,
 				hp->xp->xliffs[i].col);
 			continue;
-		}
+		} else if ( ! keep)
+			continue;
 
 		if (ssz + 1 > smax) {
 			smax = ssz + 512;

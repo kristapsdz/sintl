@@ -3,6 +3,19 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
+			<h1>0.2.6</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2018-08-01">2018-08-01</time>
+		</header>
+		<aside>
+			<p>
+				Add a <b>-q</b> mode, by default having the update sequence emit a
+				message when translations are added/deleted.
+			</p>
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
 			<h1>0.2.5</h1>
 			<address>Kristaps Dzonsons</address>
 			<time datetime="2018-07-30">2018-07-30</time>

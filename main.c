@@ -1,6 +1,6 @@
 /*	$Id$ */
 /*
- * Copyright (c) 2014, 2016 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2014, 2016, 2018 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,9 @@
 #include <assert.h>
 #if HAVE_SANDBOX_INIT
 # include <sandbox.h>
+#endif
+#if HAVE_ERR
+# include <err.h>
 #endif
 #include <expat.h>
 #include <getopt.h>
@@ -56,10 +59,8 @@ static void
 sandbox(void)
 {
 
-	if (-1 == pledge("stdio rpath", NULL)) {
-		perror("pledge");
-		exit(EXIT_FAILURE);
-	}
+	if (-1 == pledge("stdio rpath", NULL))
+		err(EXIT_FAILURE, "pledge");
 }
 #else
 static void
@@ -72,30 +73,33 @@ sandbox(void)
 int
 main(int argc, char *argv[])
 {
-	int		 ch, rc, keep = 0, copy = 0;
+	int		 ch, rc, keep = 0, copy = 0, quiet = 0;
 	const char	*xliff = NULL;
 	enum op	 	 op = OP_EXTRACT;
 	XML_Parser	 p;
 
 	sandbox();
 
-	while (-1 != (ch = getopt(argc, argv, "cej:ku:")))
+	while (-1 != (ch = getopt(argc, argv, "cej:kqu:")))
 		switch (ch) {
-		case ('c'):
+		case 'c':
 			copy = 1;
 			break;
-		case ('e'):
+		case 'e':
 			op = OP_EXTRACT;
 			xliff = NULL;
 			break;
-		case ('k'):
+		case 'k':
 			keep = 1;
 			break;
-		case ('j'):
+		case 'j':
 			op = OP_JOIN;
 			xliff = optarg;
 			break;
-		case ('u'):
+		case 'q':
+			quiet = 1;
+			break;
+		case 'u':
 			op = OP_UPDATE;
 			xliff = optarg;
 			break;
@@ -106,10 +110,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (NULL == (p = XML_ParserCreate(NULL))) {
-		perror(NULL);
-		return EXIT_FAILURE;
-	}
+	if (NULL == (p = XML_ParserCreate(NULL)))
+		errx(EXIT_FAILURE, "XML_ParserCreate");
 
 	switch (op) {
 	case (OP_EXTRACT):
@@ -121,7 +123,8 @@ main(int argc, char *argv[])
 		break;
 	case (OP_UPDATE):
 		assert(NULL != xliff);
-		rc = update(xliff, p, copy, keep, argc, argv);
+		rc = update(xliff, p, copy, 
+			keep, quiet, argc, argv);
 		break;
 	default:
 		abort();
@@ -131,7 +134,7 @@ main(int argc, char *argv[])
 	return rc ? EXIT_SUCCESS : EXIT_FAILURE;
 
 usage:
-	fprintf(stderr, "usage: %s [-cek] "
+	fprintf(stderr, "usage: %s [-cekq] "
 		"[-j xliff] [-u xliff] html5...\n", getprogname());
 	return EXIT_FAILURE;
 }
