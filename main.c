@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		break;
 	case (OP_JOIN):
 		assert(NULL != xliff);
-		rc = join(xliff, p, argc, argv);
+		rc = join(xliff, p, copy, argc, argv);
 		break;
 	case (OP_UPDATE):
 		assert(NULL != xliff);

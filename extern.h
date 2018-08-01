@@ -110,6 +110,7 @@ struct	hparse {
 	size_t		 stacksz; /* stack size */
 	const struct xparse *xp; /* XLIFF for source (or NULL) */
 	char	 	*lang; /* <html> language definition */
+	int		 copy; /* copy missing translations */
 };
 
 enum	xnesttype {
@@ -140,7 +141,7 @@ struct	xparse {
 __BEGIN_DECLS
 
 int	 extract(XML_Parser, int, int, char *[]);
-int	 join(const char *, XML_Parser, int, char *[]);
+int	 join(const char *, XML_Parser, int, int, char *[]);
 int	 update(const char *, XML_Parser, 
 		int, int, int, int, char *[]);
 

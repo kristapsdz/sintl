@@ -336,7 +336,11 @@ translate(struct hparse *hp)
 
 	lerr(hp->fname, hp->p, "no translation found");
 
-	printf("%s", cp);
+	if ( ! hp->copy)
+		XML_StopParser(hp->p, 0);
+	else
+		printf("%s", cp);
+
 	free(cp);
 	fragseq_clear(&hp->frag);
 	return 1;
@@ -966,7 +970,8 @@ extract(XML_Parser p, int copy, int argc, char *argv[])
  * translated versions.
  */
 int
-join(const char *xliff, XML_Parser p, int argc, char *argv[])
+join(const char *xliff, XML_Parser p, 
+	int copy, int argc, char *argv[])
 {
 	struct xparse	*xp;
 	struct hparse	*hp;
@@ -975,7 +980,7 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 	int		 fd, rc;
 
 	if (-1 == (fd = map_open(xliff, &mapsz, &map)))
-		return(0);
+		return 0;
 
 	xp = xparse_alloc(xliff, p);
 
@@ -989,6 +994,7 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 	if (XML_STATUS_OK == rc) {
 		hp = hparse_alloc(p, POP_JOIN);
 		hp->xp = xp;
+		hp->copy = copy;
 		rc = scanner(hp, argc, argv);
 		assert(NULL == hp->words);
 		hparse_free(hp);
@@ -996,7 +1002,7 @@ join(const char *xliff, XML_Parser p, int argc, char *argv[])
 		perr(xliff, p);
 
 	xparse_free(xp);
-	return(XML_STATUS_OK == rc);
+	return XML_STATUS_OK == rc;
 }
 
 /*
