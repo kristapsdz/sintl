@@ -35,11 +35,6 @@ joins XLIFF translation files and untranslated HTML5 files
 .Pq Fl j ,
 and merges new or removed translations
 .Pq Fl u .
-By default,
-.Nm
-behaves as if
-.Fl e
-were used.
 Its arguments are as follows:
 .Bl -tag -width -Ds
 .It Fl c
@@ -86,6 +81,12 @@ Additions and deletions are noted on standard error.
 HTML5 input files to be translated or mined for translatable information.
 .El
 .Pp
+By default,
+.Nm
+behaves as if
+.Fl e
+were used.
+.Ss Elements and text
 Each text node in the HTML5 input files is its own translatable string,
 unless the text node is in a phrasing content element.
 .Po
@@ -133,6 +134,22 @@ content.
 When set to
 .Li yes ,
 the opposite is true.
+.Ss Attributes
+Attributes are carried over into the translatable keys to differentiate
+similar content.
+.Pp
+In a break from standard usage, translations may change attribute values
+simply by changing the attribute content.
+For example,
+.Bd -literal
+<trans-unit id="unit1">
+  <source><g id="unit1-1" xhtml:href="foo.html">Hi</g>!</source>
+  <target>Le <g id="unit1-1" xhtml:href="foo.fr.html">hi</g> !</target>
+</trans-unit>
+.Ed
+.Pp
+In this example, the attribute of the translated element will replace
+that of the source.
 .Ss Optimisations
 .Nm
 performs a number of optimisations to prevent superfluous content from

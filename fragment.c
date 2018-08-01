@@ -297,6 +297,7 @@ frag_serialise_r(const struct frag *f,
 {
 	size_t	 	  i, nbufsz;
 	char		  nbuf[32];
+	char * const	 *attp;
 
 	assert(NULL != f);
 
@@ -307,11 +308,31 @@ frag_serialise_r(const struct frag *f,
 		if (f->is_null) {
 			frag_append(buf, sz, max, "x id=\"", 6);
 			frag_append(buf, sz, max, nbuf, nbufsz);
-			frag_append(buf, sz, max, "\"/>", 3);
+			frag_append(buf, sz, max, "\"", 1);
+			for (attp = f->atts; NULL != *attp; attp += 2) { 
+				frag_append(buf, sz, max, " xhtml:", 7);
+				frag_append(buf, sz, max, 
+					attp[0], strlen(attp[0]));
+				frag_append(buf, sz, max, "=\"", 2);
+				frag_append(buf, sz, max, 
+					attp[1], strlen(attp[1]));
+				frag_append(buf, sz, max, "\"", 1);
+			}
+			frag_append(buf, sz, max, "/>", 2);
 		} else {
 			frag_append(buf, sz, max, "g id=\"", 6);
 			frag_append(buf, sz, max, nbuf, nbufsz);
-			frag_append(buf, sz, max, "\">", 2);
+			frag_append(buf, sz, max, "\"", 1);
+			for (attp = f->atts; NULL != *attp; attp += 2) { 
+				frag_append(buf, sz, max, " xhtml:", 7);
+				frag_append(buf, sz, max, 
+					attp[0], strlen(attp[0]));
+				frag_append(buf, sz, max, "=\"", 2);
+				frag_append(buf, sz, max, 
+					attp[1], strlen(attp[1]));
+				frag_append(buf, sz, max, "\"", 1);
+			}
+			frag_append(buf, sz, max, ">", 1);
 		}
 	} else if (FRAG_TEXT == f->type)
 		frag_append(buf, sz, max, f->val, f->valsz);
@@ -528,6 +549,37 @@ frag_print_reduced(const struct frag *f)
 		printf("</%.*s>", (int)f->valsz, f->val);
 }
 
+/*
+ * When writing the attribute "key" during translation, where "key" is
+ * one of the attributes mapped into the translation source (e.g., <x>
+ * -> <img /> or whatnot), then make sure we haven't overwritten "key"
+ * in the translated values with "xhtml:key".
+ * Fill the value, if found, into "valp", otherwise leave it be. 
+ */
+static void
+frag_match(const struct frag *trans, 
+	const char *key, const char **valp)
+{
+	size_t		 sz;
+	char *const 	*attp;
+
+	if (NULL == trans->atts) 
+		return;
+
+	for (attp = trans->atts; NULL != *attp; attp += 2) {
+		sz = strlen(attp[0]);
+		if (sz > 6 && 
+		    0 == strncmp("xhtml:", attp[0], 6) &&
+		    0 == strcmp(attp[0] + 6, key))
+			break;
+	}
+
+	if (NULL == *attp)
+		return;
+
+	*valp = attp[1];
+}
+
 static const struct frag *
 frag_lookup(const struct fragseq *src, const struct frag *f)
 {
@@ -561,6 +613,7 @@ frag_write_seq(const struct fragseq *src,
 	const struct frag *rf = f;
 	size_t		  i;
 	const char	**attp;
+	const char	 *val;
 
 	if (FRAG_TEXT == f->type) {
 		assert(f->val);
@@ -572,8 +625,12 @@ frag_write_seq(const struct fragseq *src,
 		rf = frag_lookup(src, f);
 		printf("<%.*s", (int)rf->valsz, rf->val);
 		attp = (const char **)rf->atts;
-		for ( ; NULL != *attp; attp += 2)
-			printf(" %s=\"%s\"", attp[0], attp[1]);
+		for ( ; NULL != *attp; attp += 2) {
+			val = attp[1];
+			if (rf != f)
+				frag_match(f, attp[0], &val);
+			printf(" %s=\"%s\"", attp[0], val);
+		}
 		if (rf->is_null)
 			putchar('/');
 		putchar('>');
