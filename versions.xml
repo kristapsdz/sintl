@@ -5,12 +5,16 @@
 		<header>
 			<h1>0.2.6</h1>
 			<address>Kristaps Dzonsons</address>
-			<time datetime="2018-08-01">2018-08-01</time>
+			<time datetime="2018-08-02">2018-08-02</time>
 		</header>
 		<aside>
 			<p>
 				Add a <b>-q</b> mode, by default having the update sequence emit a
 				message when translations are added/deleted.
+				Work better with attributes: allow targets to override attributes in
+				the source.
+				This is&#8230; not really part of XLIFF, but sorely missing.
+				Document this in the manpage.
 			</p>
 		</aside>
 	</article>

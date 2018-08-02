@@ -180,8 +180,8 @@ be used as a template for translating into different languages.
 .Bd -literal
 <!DOCTYPE html>
 <html xmlns:its="http://www.w3.org/2005/11/its">
-    <head><title>title</title></head>
-    <body><p>hello <img src="foo.jpg" /> world</p></body>
+  <head><title>title</title></head>
+  <body><p>hello <img src="foo.jpg" /> world</p></body>
 </html>
 .Ed
 .Pp
@@ -192,18 +192,18 @@ We can then create an initial XLIFF file as follows.
 Now edit the XLIFF file.
 .Bd -literal
 <xliff version="1.2">
-    <file source-language="TODO" target-language="en">
-        <body>
-            <trans-unit id="unit1">
-                <source>title</source>
-                <target>Title</target>
-            </trans-unit>
-            <trans-unit id="2">
-                <source>hello <x id="0" /> world</source>
-                <target>Hello, World!</target>
-            </trans-unit>
-        </body>
-    </file>
+  <file source-language="TODO" target-language="en">
+    <body>
+      <trans-unit id="unit1">
+        <source>title</source>
+        <target>Title</target>
+      </trans-unit>
+      <trans-unit id="2">
+        <source>hello <x id="0" xhtml:src="foo.jpg"/> world</source>
+        <target>Hello, World!</target>
+      </trans-unit>
+    </body>
+  </file>
 </xliff>
 .Ed
 .Pp
