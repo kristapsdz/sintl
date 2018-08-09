@@ -1,6 +1,6 @@
 include Makefile.configure
 
-VERSION 	 = 0.2.6
+VERSION 	 = 0.2.7
 OBJS		 = compats.o \
 		   extract.o \
 		   fragment.o \
@@ -20,7 +20,6 @@ DOTAR 		 = Makefile \
 		   sintl.1 \
 		   extern.h \
 		   compats.c \
-		   configure \
 		   tests.c
 WWWDIR		 = /var/www/vhosts/kristaps.bsd.lv/htdocs/sintl
 
@@ -47,6 +46,7 @@ install: sintl
 sintl.tar.gz:
 	mkdir -p .dist/sintl-$(VERSION)/
 	install -m 0644 $(DOTAR) .dist/sintl-$(VERSION)
+	install -m 0755 configure .dist/sintl-$(VERSION)
 	( cd .dist/ && tar zcf ../$@ ./ )
 	rm -rf .dist/
 
