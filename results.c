@@ -127,7 +127,9 @@ results_update(struct hparse *hp, int copy, int keep, int quiet)
 	}
 
 	/* Output the sorted dictionary file. */
-	qsort(sorted, ssz, sizeof(struct xliff), xcmp);
+
+	if (ssz)
+		qsort(sorted, ssz, sizeof(struct xliff), xcmp);
 
 	printf("<xliff version=\"1.2\">\n"
 	       "\t<file source-language=\"%s\" "
