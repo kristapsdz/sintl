@@ -1,6 +1,6 @@
 include Makefile.configure
 
-VERSION 	 = 0.2.7
+VERSION 	 = 0.2.8
 OBJS		 = compats.o \
 		   extract.o \
 		   fragment.o \
@@ -31,17 +31,17 @@ www: $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 installwww: www
 	mkdir -p $(WWWDIR)
 	mkdir -p $(WWWDIR)/snapshots
-	install -m 0444 Makefile $(HTMLS) $(CSSS) $(WWWDIR)
-	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz
-	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz.sha512
-	install -m 0444 sintl.tar.gz $(WWWDIR)/snapshots
-	install -m 0444 sintl.tar.gz.sha512 $(WWWDIR)/snapshots
+	$(INSTALL_DATA) Makefile $(HTMLS) $(CSSS) $(WWWDIR)
+	$(INSTALL_DATA) sintl.tar.gz $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz
+	$(INSTALL_DATA) sintl.tar.gz.sha512 $(WWWDIR)/snapshots/sintl-$(VERSION).tar.gz.sha512
+	$(INSTALL_DATA) sintl.tar.gz $(WWWDIR)/snapshots
+	$(INSTALL_DATA) sintl.tar.gz.sha512 $(WWWDIR)/snapshots
 
 install: sintl
 	mkdir -p $(DESTDIR)$(BINDIR)
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
-	install -m 0755 sintl $(DESTDIR)$(BINDIR)
-	install -m 0444 sintl.1 $(DESTDIR)$(MANDIR)/man1
+	$(INSTALL_PROGRAM) sintl $(DESTDIR)$(BINDIR)
+	$(INSTALL_MAN) sintl.1 $(DESTDIR)$(MANDIR)/man1
 
 sintl.tar.gz:
 	mkdir -p .dist/sintl-$(VERSION)/

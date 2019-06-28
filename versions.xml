@@ -3,6 +3,21 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
+			<h1>0.2.8</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2019-06-28">2019-06-28</time>
+		</header>
+		<aside>
+			<p>
+				Bring up to date with newest <a
+					href="https://github.com/kristapsdz/oconfigure">oconfigure</a>
+				and spruce up web site.
+				No code change otherwise.
+			</p>
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
 			<h1>0.2.6</h1>
 			<address>Kristaps Dzonsons</address>
 			<time datetime="2018-08-02">2018-08-02</time>
