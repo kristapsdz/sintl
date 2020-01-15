@@ -1,7 +1,5 @@
 body, html			{ margin: 0; }
 body				{ font-family: "Alegreya Sans", sans-serif;
-				  font-size: 14pt;
-				  font-weight: 400;
 				  color: #333; }
 a				{ text-decoration: none; 
 				  color: blue; }
@@ -9,21 +7,14 @@ a				{ text-decoration: none;
 header				{ font-size: 200%;
 				  padding-top: 4rem;
 				  padding-bottom: 1rem;
+				  line-height: 1.3em;
+				  border-bottom: thin solid #bbb;
 				  background-color: #f6f6f6; }
 #nav				{ font-size: 12pt;
+				  line-height: 1em;
 				  margin-top: 1rem; }
 #nav a + a			{ display: inline-block;
 				  margin-left: 0.5rem; }
-#main				{ border-top: thin solid #bbb;
-				  line-height: 1.3em; }
-#main > p,
-#main > article,
-#main > nav,
-header > nav,
-header > div			{ max-width: 98%;
-				  margin-left: auto;
-				  margin-right: auto;
-				  width: 66rem; }
 strong, b			{ font-weight: 500; }
 header span			{ color: #888; }
 footer				{ text-align: center;
@@ -38,7 +29,8 @@ nav[data-sblg-nav] ul > li:first-child
 				{ opacity: 1.0; 
 				  margin-top: 1.5em; 
 				  margin-bottom: 1.5em; }
-pre, code			{ font-size: smaller;
+pre, code			{ font-size: 65%;
+				  line-height: 1.4em;
 				  font-family: monospace; }
 pre.hl				{ color: #000; 
 				  overflow: hidden;
