@@ -10,7 +10,7 @@ header				{ font-size: 200%;
 				  line-height: 1.3em;
 				  border-bottom: thin solid #bbb;
 				  background-color: #f6f6f6; }
-#nav				{ font-size: 12pt;
+#nav				{ font-size: 13pt;
 				  line-height: 1em;
 				  margin-top: 1rem; }
 #nav a + a			{ display: inline-block;
