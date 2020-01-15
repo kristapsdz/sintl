@@ -92,6 +92,7 @@ static	const char *phrasing[] = {
 	"map",
 	"mark",
 	"math",
+	"meta", /* FIXME: only if itemprop */
 	"meter",
 	/* "noscript", */
 	"object",
