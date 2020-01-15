@@ -3,6 +3,23 @@
 <articles>
 	<article data-sblg-article="1" data-sblg-tags="version">
 		<header>
+			<h1>0.2.9</h1>
+			<address>Kristaps Dzonsons</address>
+			<time datetime="2020-01-15">2020-01-15</time>
+		</header>
+		<aside>
+			<p>
+				Make <code>&lt;meta&gt;</code> tag be embeddable in
+				non-<code>&lt;head&gt;</code> content.
+				This is allowed for microdata, and <span class="nm">sintl</span>
+				simply lets it in all cases.
+				Also bring up to date with newest <a
+					href="https://github.com/kristapsdz/oconfigure">oconfigure</a>
+			</p>
+		</aside>
+	</article>
+	<article data-sblg-article="1" data-sblg-tags="version">
+		<header>
 			<h1>0.2.8</h1>
 			<address>Kristaps Dzonsons</address>
 			<time datetime="2019-06-28">2019-06-28</time>

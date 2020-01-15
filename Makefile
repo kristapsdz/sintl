@@ -1,6 +1,6 @@
 include Makefile.configure
 
-VERSION 	 = 0.2.8
+VERSION 	 = 0.2.9
 OBJS		 = compats.o \
 		   extract.o \
 		   fragment.o \
