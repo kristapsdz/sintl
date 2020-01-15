@@ -12,7 +12,7 @@ SRCS		 = extract.c \
 		   results.c
 XMLS		 = index.xml
 HTMLS 		 = atom.xml index.html sintl.1.html
-CSSS 		 = mandoc.css index.css 
+CSSS 		 = index.css 
 BINDIR 		 = $(PREFIX)/bin
 MANDIR 		 = $(PREFIX)/man
 DOTAR 		 = Makefile \
@@ -77,7 +77,7 @@ atom.xml: versions.xml
 	sblg -a versions.xml
 
 sintl.1.html: sintl.1
-	mandoc -Ostyle=mandoc.css -Thtml sintl.1 >$@
+	mandoc -Ostyle=https://bsd.lv/css/mandoc.css -Thtml sintl.1 >$@
 
 index.html: index.xml versions.xml sample-input.html sample-xliff.html sample-output.html
 	sblg -s cmdline -t index.xml -o $@ versions.xml sample-input.html sample-xliff.html sample-output.html
