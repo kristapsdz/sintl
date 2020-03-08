@@ -86,5 +86,24 @@ clean:
 	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 	rm -f sample-input.html sample-xliff.html sample-output.html sample-output.xml
 
+regress:
+	# Do nothing.
+
+distcheck: sintl.tar.gz.sha512
+	mandoc -Tlint -Werror sintl.1
+	newest=`grep "<h1>" versions.xml | head -n1 | sed 's![ 	]*!!g'` ; \
+	       [ "$$newest" = "<h1>$(VERSION)</h1>" ] || \
+		{ echo "Version $(VERSION) not newest in versions.xml" 1>&2 ; exit 1 ; }
+	rm -rf .distcheck
+	[ "`openssl dgst -sha512 -hex sintl.tar.gz`" = "`cat sintl.tar.gz.sha512`" ] || \
+ 		{ echo "Checksum does not match." 1>&2 ; exit 1 ; }
+	mkdir -p .distcheck
+	tar -zvxpf sintl.tar.gz -C .distcheck
+	( cd .distcheck/sintl-$(VERSION) && ./configure PREFIX=prefix )
+	( cd .distcheck/sintl-$(VERSION) && $(MAKE) )
+	( cd .distcheck/sintl-$(VERSION) && $(MAKE) regress )
+	( cd .distcheck/sintl-$(VERSION) && $(MAKE) install )
+	rm -rf .distcheck
+
 distclean: clean
 	rm -f Makefile.configure config.h config.log
