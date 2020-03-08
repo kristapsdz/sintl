@@ -1,30 +1,30 @@
 include Makefile.configure
 
-VERSION 	 = 0.2.9
-OBJS		 = compats.o \
-		   extract.o \
-		   fragment.o \
-		   main.o \
-		   results.o 
-SRCS		 = extract.c \
-		   fragment.c \
-		   main.c \
-		   results.c
-XMLS		 = index.xml
-HTMLS 		 = atom.xml index.html sintl.1.html
-CSSS 		 = index.css 
-BINDIR 		 = $(PREFIX)/bin
-MANDIR 		 = $(PREFIX)/man
-DOTAR 		 = Makefile \
-		   $(SRCS) \
-		   sintl.1 \
-		   extern.h \
-		   compats.c \
-		   tests.c
-WWWDIR		 = /var/www/vhosts/kristaps.bsd.lv/htdocs/sintl
+VERSION 	  = 0.2.9
+OBJS		  = compats.o \
+		    extract.o \
+		    fragment.o \
+		    main.o \
+		    results.o 
+SRCS		  = extract.c \
+		    fragment.c \
+		    main.c \
+		    results.c
+XMLS		  = index.xml
+HTMLS 		  = atom.xml index.html sintl.1.html
+CSSS 		  = index.css 
+DOTAR 		  = Makefile \
+		    $(SRCS) \
+		    sintl.1 \
+		    extern.h \
+		    compats.c \
+		    tests.c
+WWWDIR		  = /var/www/vhosts/kristaps.bsd.lv/htdocs/sintl
+LIBS		 != pkg-config --libs expat
+CFLAGS		+!= pkg-config --cflags expat
 
 sintl: $(OBJS)
-	$(CC) -o $@ $(OBJS) -lexpat
+	$(CC) -o $@ $(OBJS) $(LIBS)
 
 www: $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 
