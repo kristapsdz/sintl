@@ -21,7 +21,8 @@ DOTAR 		  = Makefile \
 		    tests.c
 WWWDIR		  = /var/www/vhosts/kristaps.bsd.lv/htdocs/sintl
 LIBS		 != pkg-config --libs expat
-CFLAGS		+!= pkg-config --cflags expat
+CFLAGS_PKG	 != pkg-config --cflags expat
+CFLAGS		 += $(CFLAGS_PKG)
 
 sintl: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBS)
