@@ -6,15 +6,29 @@ a				{ text-decoration: none;
 .nm				{ font-style: italic; }
 header				{ font-size: 200%;
 				  padding-top: 4rem;
-				  padding-bottom: 1rem;
+				  padding-bottom: 0.5rem;
 				  line-height: 1.3em;
 				  border-bottom: thin solid #bbb;
 				  background-color: #f6f6f6; }
 #nav				{ font-size: 13pt;
 				  line-height: 1em;
-				  margin-top: 1rem; }
-#nav a + a			{ display: inline-block;
-				  margin-left: 0.5rem; }
+				  margin-top: 1rem;
+				  display: -webkit-box;
+				  display: -ms-flexbox;
+				  display: flex; }
+#nav a				{ display: inline-block;
+				  padding: 4pt 0; }
+#nav a + a			{ margin-left: 0.5rem; }
+#nav > :last-child		{ -webkit-box-flex: 1;
+				          -ms-flex: 1;
+				              flex: 1;
+				  text-align: right; }
+#nav > :last-child a		{ border: 3px solid rgba(0, 0, 255, 0.5);
+				  padding: 4pt 8pt;
+				  transition: border linear 0.2s;
+				  border-radius: 4pt; }
+#nav > :last-child a:hover	{ border: 3px solid rgba(0, 0, 255, 0.9); }
+				  
 strong, b			{ font-weight: 500; }
 header span			{ color: #888; }
 footer				{ text-align: center;

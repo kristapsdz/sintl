@@ -24,6 +24,11 @@
 					<a itemprop="downloadURL" href="snapshots/sintl.tar.gz"><i class="fa fa-gears"></i> source</a>
 					<a href="snapshots"><i class="fa fa-archive"></i> archive</a>
 					<a href="atom.xml"><i class="fa fa-rss"></i> rss</a>
+					<span>
+						<a href="https://kristaps.bsd.lv/cgi-bin/minci.cgi/index.html?project-name=sintl">
+							<i class="fa fa-tachometer"></i> build status
+						</a>
+					</span>
 				</nav>
 			</div>
 		</header>
@@ -80,10 +85,13 @@
 				<a rel="author" href="https://github.com/kristapsdz">Kristaps Dzonsons</a>
 			</div>
 			<nav>
-				<a href="https://github.com/kristapsdz/sintl"><i class="fa fa-fw fa-github"></i></a>
-				<a itemprop="downloadURL" href="snapshots/sintl.tar.gz"><i class="fa fa-fw fa-gears"></i></a>
-				<a href="snapshots"><i class="fa fa-fw fa-archive"></i></a>
-				<a href="atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+				<a title="github" href="https://github.com/kristapsdz/sintl"><i class="fa fa-fw fa-github"></i></a>
+				<a title="download" itemprop="downloadURL" href="snapshots/sintl.tar.gz"><i class="fa fa-fw fa-gears"></i></a>
+				<a title="archive" href="snapshots"><i class="fa fa-fw fa-archive"></i></a>
+				<a title="feed" href="atom.xml"><i class="fa fa-fw fa-rss"></i></a>
+				<a title="builds" href="https://kristaps.bsd.lv/cgi-bin/minci.cgi/index.html?project-name=sintl">
+					<i class="fa fa-fw fa-tachometer"></i>
+				</a>
 			</nav>
 		</footer>
 	</body>
