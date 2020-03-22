@@ -21,8 +21,13 @@ DOTAR 		  = Makefile \
 		    tests.c
 WWWDIR		  = /var/www/vhosts/kristaps.bsd.lv/htdocs/sintl
 
+LDADD_PKG	!= pkg-config --libs expat 2>/dev/null || echo "-lexpat"
+CFLAGS_PKG 	!= pkg-config --cflags expat 2>/dev/null || echo ""
+LDADD		+= $(LDADD_PKG)
+CFLAGS		+= $(CFLAGS_PKG)
+
 sintl: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDADD_EXPAT) $(LDADD)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDADD)
 
 www: $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 
