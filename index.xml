@@ -72,6 +72,10 @@
 				<code>./configure</code> and <code>make install</code> as usual.
 				It is designed to work on any modern UNIX operating system, although its target environment is <a
 					href="https://www.openbsd.org">OpenBSD</a>.
+				(If you're on Mac OS X, you should have expat installed from a third-party package manager: the built-in expat
+				does not integrate with <a href="https://man.openbsd.org/pkg-config">pkg-config</a>.)
+			</p>
+			<p>
 				The last versions are as follows:
 			</p>
 			<nav data-sblg-nav="1" data-sblg-navcontent="1" data-sblg-navtag="version">

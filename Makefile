@@ -21,8 +21,8 @@ DOTAR 		  = Makefile \
 		    tests.c
 WWWDIR		  = /var/www/vhosts/kristaps.bsd.lv/htdocs/sintl
 
-LDADD_PKG	!= pkg-config --libs expat 2>/dev/null || echo "-lexpat"
-CFLAGS_PKG 	!= pkg-config --cflags expat 2>/dev/null || echo ""
+LDADD_PKG	!= pkg-config --libs expat || echo "-lexpat"
+CFLAGS_PKG 	!= pkg-config --cflags expat || echo ""
 LDADD		+= $(LDADD_PKG)
 CFLAGS		+= $(CFLAGS_PKG)
 
