@@ -26,6 +26,8 @@ CFLAGS_PKG 	!= pkg-config --cflags expat || echo ""
 LDADD		+= $(LDADD_PKG)
 CFLAGS		+= $(CFLAGS_PKG)
 
+all: sintl
+
 sintl: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS) $(LDADD)
 
@@ -89,8 +91,36 @@ clean:
 	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 	rm -f sample-input.html sample-xliff.html sample-output.html sample-output.xml
 
-regress:
-	# Do nothing.
+regress: all
+	@tmp=`mktemp` ; \
+	set +e ; \
+	for f in regress/join-pass/*.xml ; do \
+		./sintl -j regress/join-pass/`basename $$f .xml`.xliff $$f > $$tmp ; \
+		if [ $$? -ne 0 ] ; \
+		then \
+			echo "$$f: fail (command fail)" ; \
+			rm -f $$tmp ; \
+			exit 1 ; \
+		fi ; \
+		diff -q $$tmp regress/join-pass/`basename $$f .xml`.html 2>/dev/null ; \
+		if [ $$? -ne 0 ] ; \
+		then \
+			echo "$$f: fail (diff)" ; \
+			rm -f $$tmp ; \
+			exit 1 ; \
+		fi ; \
+		echo "$$f: ok" ; \
+	done ; \
+	rm -f $$tmp ; \
+	for f in regress/join-fail/*.xml ; do \
+		./sintl -j regress/join-fail/`basename $$f .xml`.xliff $$f >/dev/null 2>&1 ; \
+		if [ $$? -eq 0 ] ; \
+		then \
+			echo "$$f: fail (expected errors)" ; \
+			exit 1 ; \
+		fi ; \
+		echo "$$f: ok" ; \
+	done 
 
 distcheck: sintl.tar.gz.sha512
 	mandoc -Tlint -Werror sintl.1
