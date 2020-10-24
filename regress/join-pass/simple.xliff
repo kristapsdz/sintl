@@ -1,0 +1,15 @@
+<xliff version="1.2">
+	<file source-language="en" target-language="en">
+		<body>
+			<trans-unit id="unit1">
+				<source>title</source>
+				<target>Title</target>
+			</trans-unit>
+			<trans-unit id="2">
+				<source>hello <x id="0" xhtml:src="foo.jpg"/> world</source>
+				<target>Hello, World!</target>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>
+

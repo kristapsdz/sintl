@@ -1,0 +1,5 @@
+<!DOCTYPE html>
+<html xmlns:its="http://www.w3.org/2005/11/its" lang="en">
+	<head><title>title</title></head>
+	<body><p>hello <img src="bar.jpg" /> world</p></body>
+</html>
