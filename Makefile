@@ -137,7 +137,6 @@ regress: all
 	done 
 
 distcheck: sintl.tar.gz.sha512
-	rm -rf .distcheck
 	mandoc -Tlint -Werror sintl.1
 	newest=`grep "<h1>" versions.xml | head -1 | sed 's![ 	]*!!g'` ; \
 	       [ "$$newest" = "<h1>$(VERSION)</h1>" ] || \
