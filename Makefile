@@ -1,3 +1,5 @@
+.PHONY: regress clean distcheck distclean
+
 include Makefile.configure
 
 VERSION 	  = 0.2.10
@@ -49,8 +51,13 @@ install: sintl
 	$(INSTALL_MAN) sintl.1 $(DESTDIR)$(MANDIR)/man1
 
 sintl.tar.gz:
-	mkdir -p .dist/sintl-$(VERSION)/
+	rm -rf .dist/
+	mkdir -p .dist/sintl-$(VERSION)
+	mkdir -p .dist/sintl-$(VERSION)/regress/join-pass
+	mkdir -p .dist/sintl-$(VERSION)/regress/join-fail
 	install -m 0644 $(DOTAR) .dist/sintl-$(VERSION)
+	install -m 0644 regress/join-pass/*\.* .dist/sintl-$(VERSION)/regress/join-pass
+	install -m 0644 regress/join-fail/*\.* .dist/sintl-$(VERSION)/regress/join-fail
 	install -m 0755 configure .dist/sintl-$(VERSION)
 	( cd .dist/ && tar zcf ../$@ ./ )
 	rm -rf .dist/
@@ -91,6 +98,13 @@ clean:
 	rm -f sintl $(OBJS) $(HTMLS) sintl.tar.gz sintl.tar.gz.sha512
 	rm -f sample-input.html sample-xliff.html sample-output.html sample-output.xml
 
+# - regress/join-pass
+#   Runs sintl -j IN_XLIFF IN_XML > OUT_HAVE_HTML
+#   Checks that OUT_HAVE_HTML matches OUT_WANT_HTML.
+# - regress/join-fail
+#   Runs sintl -j IN_XLIFF IN_XML
+#   Expects the command to fail (badly-formed).
+
 regress: all
 	@tmp=`mktemp` ; \
 	set +e ; \
@@ -123,6 +137,7 @@ regress: all
 	done 
 
 distcheck: sintl.tar.gz.sha512
+	rm -rf .distcheck
 	mandoc -Tlint -Werror sintl.1
 	newest=`grep "<h1>" versions.xml | head -1 | sed 's![ 	]*!!g'` ; \
 	       [ "$$newest" = "<h1>$(VERSION)</h1>" ] || \
