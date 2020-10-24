@@ -1,26 +1,48 @@
-## Synopsis
+# Synopsis
 
 *sintl* is a tool for translating HTML5 web pages.  It's designed with
 simplicity in mind; so for more complex needs, you may want to stick
 with [itstool](http://itstool.org/) or other tools.
 
-See the [sintl](https://kristaps.bsd.lv/sintl) website for stable
-releases and documentation.
+This repository consists of bleeding-edge code between versions: to keep
+up to date with the current stable release of **sintl**, visit the
+[website](https://kristaps.bsd.lv/sintl).
+The website also contains canonical tool documentation.
 
-This is a read-only copy of the internal CVS repository and is kept
-more-or-less up to date with current development.  If you have patches
-or questions, however, you can still post them here or use the usual
-GitHub facilities to submit patches.
+What follows describes using the bleeding-edge version of the system.
 
-## Installation
+# Installation
 
-Download the latest version's 
-[source archive](https://kristaps.bsd.lv/sintl/snapshots/sintl.tar.gz) 
-(or download the project from GitHub), run `./configure`,
-compile with `make`, then `sudo make install` (or `doas make install`,
-whatever the case may be).
+To use the bleeding-edge version of **sintl** (instead of from your
+system's packages or a stable version), the process it the similar as
+for source releases.
 
-## License
+You'll need **expat** on your system.  It's usually a system library.
+
+Begin by cloning or downloading.  Then configure with `./configure`,
+compile with `make` (BSD make, so it may be `bmake` on your system),
+then `make install` (or use `sudo` or `doas`, if applicable). 
+
+```sh
+./configure
+make
+make install
+```
+
+For development, a simple `make` will do.
+
+# Regression and fuzzing
+
+At this time, there's no facility for fuzzing **sintl**, but it's a
+relatively easy thing to set up.
+
+The regression tests may be run with the `regress` rule:
+
+```sh
+make regress
+```
+
+# License
 
 All sources use the ISC (like OpenBSD) license.
 See the [LICENSE.md](LICENSE.md) file for details.
