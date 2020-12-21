@@ -116,7 +116,7 @@ regress: all
 			rm -f $$tmp ; \
 			exit 1 ; \
 		fi ; \
-		diff -q $$tmp regress/join-pass/`basename $$f .xml`.html 2>/dev/null ; \
+		diff $$tmp regress/join-pass/`basename $$f .xml`.html >/dev/null 2>&1 ; \
 		if [ $$? -ne 0 ] ; \
 		then \
 			echo "$$f: fail (diff)" ; \
